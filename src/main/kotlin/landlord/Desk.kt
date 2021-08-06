@@ -33,7 +33,7 @@ class Desk(number: Long) {
 
     var lastCard: List<String> = listOf() //上位玩家的牌
     var lastCardType: String = "" //上位玩家的牌类
-    var lastWeights: List<Int> = listOf() //上位玩家的牌的权重
+    var lastWeight: Int = 0 //上位玩家的牌的权重
 
     var msg: String = ""
 
@@ -116,7 +116,7 @@ class Desk(number: Long) {
         return ret.joinToString("")
     }
 
-    fun isCanWin(cardCount: Int, weights: List<Int>, type: String): Boolean {
+    fun isCanWin(cardCount: Int, weight: Int, type: String): Boolean {
         if (type == "" || lastCardType == "王炸") {
             return false;
         }
@@ -129,28 +129,21 @@ class Desk(number: Long) {
         if (type == "炸弹" && type != lastCardType) {
             return true;
         }
-        if (type == lastCardType && cardCount == lastCard.size) {
-            return weights.zip(lastWeights).any() { (a, b) ->
-                a > b
-            }
-        }
-        return false;
+        return type == lastCardType && cardCount == lastCard.size&& weight > lastWeight
     }
 
-    fun getMycardType(list: MutableList<String>, weights: MutableList<Int>): String {
+    fun getMycardType(list: List<String>): Pair<String, Int> {
         val cardCount = list.size
-        list.sortBy { Util.findFlag(it) }
 
         if (cardCount == 2 && Util.findFlag(list[0]) + Util.findFlag(list[1]) == 27) {//王炸
-            return "王炸"
+            return Pair("王炸", 13)
         }
 
         val cards: MutableList<String> = mutableListOf()
+        // 去重列表，由小到大排序
         val counts: MutableList<Int> = mutableListOf()
 
-        val no2InCards: Boolean = list.any { it == "2"}
-
-        for (card in list) {
+        for (card in list.sortedBy { Util.findFlag(it) }) {
             val index: Int = cards.indexOf(card)
             if (index == -1) {
                 cards += card
@@ -160,152 +153,72 @@ class Desk(number: Long) {
             }
         }
 
-        var max = counts.maxOrNull()
-        var min = counts.minOrNull()
-        var cardGroupCout = cards.size
+        val max_count = counts.maxOf { it }
+        val min_count = counts.minOf { it }
+        var cardGroupCount = cards.size
 
-        var tmpCount: MutableList<Int> = counts.toMutableList()
-        tmpCount.sortDescending()
-        if (cardCount == 1) {//单牌
-            weights += Util.findFlag(cards[0])
-            return "单牌"
+        if (cardCount == 1) {
+            return Pair("单牌", Util.findFlag(cards[0]))
         }
-        if (cardCount == 2 && max == 2) {//对子
-            weights += Util.findFlag(cards[0])
-            return "对子"
+        if (cardCount == 2 && max_count == 2) {
+            return Pair("对子", Util.findFlag(cards[0]))
         }
-        if (cardCount == 3 && max == 3) {//三张
-            weights += Util.findFlag(cards[0])
-            return "三张"
+        if (cardCount == 3 && max_count == 3) {
+            return Pair("三张", Util.findFlag(cards[0]))
         }
-        if (cardCount == 4 && max == 4) {//炸弹
-            weights += Util.findFlag(cards[0])
-            return "炸弹"
+        if (cardCount == 4 && max_count == 4) {
+            return Pair("炸弹", Util.findFlag(cards[0]))
         }
-
-        if (cardCount == 4 && max == 3) {//3带1
-            for (tmp in tmpCount) {
-                for (m in 0..counts.size-1) {
-                    if (counts[m] == tmp) {
-                        weights += Util.findFlag(cards[m])
-                        counts[m] = -1
-                    }
-                }
-            }
-            return "3带1"
+        if (cardCount == 4 && max_count == 3) {
+            return Pair("3带1", Util.findFlag(cards[counts.indexOf(3)]))
         }
-
-        if (cardCount == 5 && max == 3 && min == 2) {//3带2
-            for (tmp in tmpCount) {
-                for (m in 0..counts.size-1) {
-                    if (counts[m] == tmp) {
-                        weights += Util.findFlag(cards[m])
-                        counts[m] = -1
-                    }
-                }
-            }
-            return "3带2";
+        if (cardCount == 5 && max_count == 3 && min_count == 2) {
+            return Pair("3带2", Util.findFlag(cards[counts.indexOf(3)]))
+        }
+        if (cardCount == 6 && max_count == 4) {
+            return Pair("4带2", Util.findFlag(cards[counts.indexOf(4)]))
+        }
+        if (cardCount == 8 && max_count == 4 && min_count == 2) {
+            return Pair("4带2对", Util.findFlag(cards[counts.indexOf(4)]))
+        }
+        if (cardGroupCount * max_count > 4 && max_count == min_count
+            && Util.findFlag(cards[cardGroupCount - 1]) - Util.findFlag(cards[0]) + 1 == cardGroupCount
+            && Util.findFlag(cards[cardGroupCount - 1]) < 12
+        ) { //顺子
+            val model = if(max_count == 1) "顺子" else "${max_count}连顺"
+            return Pair(model, Util.findFlag(cards[0]))
         }
 
-        // BUG: AAAABB?
-        if (cardCount == 6 && max == 4) {//4带2
-            for (tmp in tmpCount) {
-                for (m in 0..counts.size-1) {
-                    if (counts[m] == tmp) {
-                        weights += Util.findFlag(cards[m])
-                        counts[m] = -1
-                    }
-                }
+        if (list.size % 4 == 0) {
+            // 判断 AAAB 型飞机
+            val len = list.size / 4
+            val lastTrip = counts.lastIndexOf(3)
+            val firstTrip = counts.indexOf(3)
+            if(counts.subList(lastTrip - len + 1, lastTrip + 1).all { it == 3 } &&
+                Util.findFlag(cards[lastTrip]) - Util.findFlag(cards[lastTrip - len + 1]) + 1 == len) {
+                // 飞机的主体必然包含三张的牌中最大的或最小的 // 都是三张且连续
+                return Pair("飞机带${len}翅膀", Util.findFlag(cards[lastTrip - len + 1]))
             }
-            return "4带2";
-        }
-
-        if (cardGroupCout > 2 && max == 2 && min == 2
-            && Util.findFlag(cards[0]) == Util.findFlag(cards[cardGroupCout - 1]) - cardGroupCout + 1
-            && Util.findFlag(cards[cardGroupCout - 1]) < 13
-            && no2InCards	//连对不能有2
-        ) {//连对
-            for (i in 0..tmpCount.size - 1) {
-                val tmp = tmpCount[i]
-                for (m in 0..counts.size - 1) {
-                    if (counts[m] == tmp) {
-                        weights += Util.findFlag(cards[m])
-                        counts[m] = -1
-                    }
-                }
-            }
-
-            return "连对"
-        }
-
-        assert(false)
-        return ""
-        /*
-        //for (unsigned i = 0; i < cardGroupCout; i++) {
-        //	if (cards[cardGroupCout] == L"2") {
-        //		no2InCards = false;
-        //	}
-        //}
-
-        if (cardGroupCout > 4 && max == 1 && min == 1
-            && Util::findFlag(cards[0]) == Util::findFlag(cards[cardGroupCout - 1]) - cardGroupCout + 1
-            && Util::findFlag(cards[cardGroupCout - 1]) < 13
-            && no2InCards	//三人斗地主顺子不能带2
-        ) {//顺子
-            for (unsigned i = 0; i < tmpCount.size(); i++) {
-                int tmp = tmpCount[i];
-                for (unsigned m = 0; m < counts.size(); m++) {
-                if (counts[m] == tmp) {
-                        weights->push_back(Util::findFlag(cards[m]));
-                    counts[m] = -1;
-                }
-            }
-            }
-
-            return L"顺子";
-        }
-
-        //飞机
-        int  planeCount = 0;
-        for (unsigned i = 0; i < counts.size(); i++) {
-            if (counts[i] >= 3) {
-                planeCount++;
+            if(counts.subList(firstTrip, firstTrip + len).all { it == 3 } &&
+                Util.findFlag(cards[firstTrip + len - 1]) - Util.findFlag(cards[firstTrip]) + 1 == len) {
+                return Pair("飞机带${len}翅膀", Util.findFlag(cards[firstTrip]))
             }
         }
-        if (planeCount > 1) {
-            wstring tmp;
-            if (cardCount == planeCount * 3) {
-                tmp = L"飞机";
+        if (list.size % 5 == 0 && min_count > 1) {
+            // 判断 AAABB 型飞机
+            val len = list.size / 5
+            val lastTrip = counts.lastIndexOf(3)
+            val firstTrip = counts.indexOf(3)
+            if(counts.subList(lastTrip - len + 1, lastTrip + 1).all { it == 3 } &&
+                Util.findFlag(cards[lastTrip]) - Util.findFlag(cards[lastTrip - len + 1]) + 1 == len) {
+                return Pair("飞机带${len}翅膀", Util.findFlag(cards[lastTrip - len + 1]))
             }
-            else if (cardCount == planeCount * 4) {
-                tmp = L"飞机带翅膀";
+            if(counts.subList(firstTrip, firstTrip + len).all { it == 3 } &&
+                Util.findFlag(cards[firstTrip + len - 1]) - Util.findFlag(cards[firstTrip]) + 1 == len) {
+                return Pair("飞机带${len}翅膀", Util.findFlag(cards[firstTrip]))
             }
-            else if (cardCount == planeCount * 5 && min == 2) {
-                tmp = L"飞机带双翅膀";
-            }
-
-            for (int i = 0; i < planeCount; i++) {
-                int tmp = tmpCount[i];
-                for (unsigned m = 0; m < counts.size(); m++) {
-                if (counts[m] == tmp) {
-                        weights->push_back(Util::findFlag(cards[m]));
-                    counts[m] = -1;
-                }
-            }
-            }
-
-            sort(weights->begin(), weights->end(), Util::desc);
-
-            int weightscount = weights->size();
-
-            if (weights->at(0) - weightscount + 1 != weights->at(weightscount - 1)) {
-                return L"";
-            }
-
-            return tmp;
         }
-        return L"";
-         */
+        return Pair("", 0)
     }
 
     suspend fun sendMsg(subType: Boolean) {
@@ -582,15 +495,7 @@ class Desk(number: Long) {
             return
         }
 
-        var msglist = mutableListOf<String>()
-        // BUG: starts from 0?
-        var i: Int = 1
-        while(i < length) {
-            val arg_len = if (msg[i] in setOf<Char>('1', '小', '大')) 2 else 1
-            msglist += msg.substring(i, i + arg_len)
-            i += arg_len
-        }
-        play_real(playIndex, msglist)
+        play_real(playIndex, Util.stringToCards(msg))
     }
 
     fun play_real(playIndex: Int, list: MutableList<String>) {
@@ -608,10 +513,9 @@ class Desk(number: Long) {
             }
         }
 
-        var weights: MutableList<Int> = mutableListOf()
-        val type = getMycardType(list, weights);
+        val (type, weight) = getMycardType(list)
 
-        val isCanWin: Boolean = this.isCanWin(cardCount, weights, type)
+        val isCanWin: Boolean = this.isCanWin(cardCount, weight, type)
 
         if (isCanWin) {
             if (this.turn == 0) {
@@ -633,7 +537,7 @@ class Desk(number: Long) {
             this.warningSent = false
 
             player.card = mycardTmp
-            this.lastWeights = weights
+            this.lastWeight = weight
             this.lastCard = list
             this.lastCardType = type
             this.lastPlayIndex = this.currentPlayIndex
@@ -897,7 +801,7 @@ class Desk(number: Long) {
 
         if (this.currentPlayIndex == this.lastPlayIndex) {
             this.lastCard = listOf()
-            this.lastWeights = listOf()
+            this.lastWeight = 0
             this.lastCardType = ""
         }
 

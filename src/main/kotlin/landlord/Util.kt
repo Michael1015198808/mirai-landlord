@@ -68,4 +68,14 @@ object Util {
         // TODO: return time
         return ""
     }
+    fun stringToCards(s: String): MutableList<String> {
+        var cards = mutableListOf<String>()
+        var i: Int = 0
+        while(i < s.length) {
+            val argLen = if (s[i] in setOf<Char>('1', '小', '大')) 2 else 1
+            cards += s.substring(i, i + argLen)
+            i += argLen
+        }
+        return cards
+    }
 }

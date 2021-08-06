@@ -48,7 +48,7 @@ object Casino {
             desk.join(playNum);
         } else if ((desk.state >= STATE_READYTOGO) &&
             (msg.startsWith("出") || msg.startsWith("打"))) {//出牌阶段
-            desk.play(playNum, msg)
+            desk.play(playNum, msg.substring(1))
         } else if ((desk.state >= STATE_READYTOGO) &&
             (msg.startsWith("过") || msg.startsWith("过牌") || msg.startsWith("不出") ||
                 msg.startsWith("没有") || msg.startsWith("打不出") || msg.startsWith("要不起") ||
