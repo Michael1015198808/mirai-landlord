@@ -18,7 +18,7 @@ class Desk(number: Long) {
 
     var whoIsWinner: Int = 0
     var state: Int = STATE_WAIT
-    var lastPlayIndex: Int = -1//当前谁出得牌
+    var lastPlayIndex: Int = -1//当前谁出的牌
     var currentPlayIndex: Int = -1//该谁出牌
     // TODO: 改名为landlord
     var bossIndex: Int = -1//谁是地主
@@ -32,7 +32,7 @@ class Desk(number: Long) {
     var farmCount: Int = 0
 
     var lastCard: List<String> = listOf() //上位玩家的牌
-    var lastCardType: String = "" //上位玩家得牌类
+    var lastCardType: String = "" //上位玩家的牌类
     var lastWeights: List<Int> = listOf() //上位玩家的牌的权重
 
     var msg: String = ""
