@@ -37,9 +37,9 @@ class Desk(number: Long) {
 
     var msg: String = ""
 
-    fun at(playNum: Long) {
+    fun at(playNum: Long): String {
         // TODO: Allow @people
-        msg += "@$playNum";
+        return "@$playNum";
     }
 
     fun breakLine() {
@@ -56,6 +56,9 @@ class Desk(number: Long) {
 
     fun listPlayers(type: Int): String {
         val hasType: Boolean = type.and(1) == 1
+        if(hasType && state < STATE_READYTOGO) {
+            System.err.println("type=$type but state < STATE_GAMING")
+        }
         val hasWin: Boolean  = type.and(2) == 1
 
         val score = basic * multiple
@@ -71,11 +74,11 @@ class Desk(number: Long) {
         }
         for((i, player) in players.withIndex()) {
             ret += "${i+1}号玩家："
-            if (hasType) {
-                ret += "[${if((i == bossIndex) && (state == STATE_GAMING)) "地主" else "农民"}]"
+            if (state >= STATE_READYTOGO) {
+                ret += "[${if(i == bossIndex) "地主" else "农民"}]"
             }
 
-            at(player.number)
+            ret += at(player.number)
             if (hasWin) {
                 val farm_flag: Boolean = (whoIsWinner == 2) //如果是农民赢了
                 var add_score: Long
@@ -88,7 +91,7 @@ class Desk(number: Long) {
                     ret += "[失败，${add_score}分]"
 
                     ret += "\n剩余手牌："
-                    listCardsOnDesk(player)
+                    ret += listCardsOnDesk(player)
                 } else {
                     add_score = if(farm_flag) halfScore else score
                     ret += "[胜利，+${add_score}分"
@@ -96,7 +99,7 @@ class Desk(number: Long) {
                     //如果还有牌，就公开手牌
                     if (player.card.size > 0) {
                         ret += "\n剩余手牌："
-                        listCardsOnDesk(player)
+                        ret += listCardsOnDesk(player)
                     }
                 }
                 assert(win_flag != null)
@@ -105,6 +108,8 @@ class Desk(number: Long) {
                 if(win_flag != null) {
                     if(win_flag) Admin.addWin(player.number) else Admin.addLose(player.number)
                 }
+            } else {
+                ret += "：${player.card.size}张手牌"
             }
             ret += "\n"
         }
@@ -345,7 +350,7 @@ class Desk(number: Long) {
 
         bossIndex = index
         currentPlayIndex = index
-        at(players[index].number)
+        msg += at(players[index].number)
         breakLine()
         msg += "你是否要抢地主？\n请用[抢]或[不(抢)]来回答。\n"
         //战况播报
@@ -401,12 +406,12 @@ class Desk(number: Long) {
                 return;
             }
             else {
-                at(players[index].number);
+                msg += at(players[index].number);
                 msg += "不抢地主。";
                 breakLine();
                 msg += "---------------";
                 breakLine();
-                at(players[currentPlayIndex].number);
+                msg += at(players[currentPlayIndex].number);
                 breakLine();
                 msg += "你是否要抢地主？";
                 breakLine();
@@ -420,7 +425,7 @@ class Desk(number: Long) {
     fun sendBossCard() {
         val playerBoss: Player = players[bossIndex]
 
-        at(playerBoss.number)
+        msg += at(playerBoss.number)
         msg += "是地主，底牌是：";
         msg +=
             "[" + cards[53] + "]" +
@@ -455,7 +460,7 @@ class Desk(number: Long) {
 
         msg += "抢地主环节结束，下面进入加倍环节。\n"
         msg += "---------------\n"
-        at(players[bossIndex].number)
+        msg += at(players[bossIndex].number)
         breakLine()
         msg += "你是否要加倍？\n"
         msg += "请用[加]或[不(加)]来回答。\n"
@@ -474,7 +479,7 @@ class Desk(number: Long) {
             setNextPlayerIndex();
 
             if (currentPlayIndex == bossIndex && bossHasMultipled) {
-                at(players[index].number);
+                msg += at(players[index].number);
                 msg += "要加倍。\n"
                 msg += "本局积分：${basic*multiple}\n"
                 msg += "---------------\n"
@@ -489,7 +494,7 @@ class Desk(number: Long) {
                 msg += listPlayers(1)
 
                 msg += "请地主";
-                at(players[bossIndex].number)
+                msg += at(players[bossIndex].number)
                 msg += "先出牌。\n"
                 //战况播报
                 sendWatchingMsg_Start()
@@ -497,11 +502,11 @@ class Desk(number: Long) {
             else {
                 bossHasMultipled = true
 
-                at(players[index].number)
+                msg += at(players[index].number)
                 msg += "要加倍。\n"
                 msg += "本局积分：${basic*multiple}"
                 this.msg += "\n---------------\n";
-                this.at(players[currentPlayIndex].number);
+                msg += this.at(players[currentPlayIndex].number);
                 this.msg += "你是否要加倍？\n"
                 this.msg += "请用[加]或[不(加)]来回答。\n"
             }
@@ -520,7 +525,7 @@ class Desk(number: Long) {
             this.warningSent = false;
 
             if (this.currentPlayIndex == this.bossIndex && bossHasMultipled) {
-                this.at(this.players[index].number);
+                msg += this.at(this.players[index].number);
                 this.msg += "不要加倍。\n"
                 this.msg += "---------------\n"
 
@@ -535,7 +540,7 @@ class Desk(number: Long) {
                 msg += this.listPlayers(1)
                 this.breakLine();
                 this.msg += "请地主"
-                this.at(players[this.bossIndex].number)
+                msg += this.at(players[this.bossIndex].number)
                 this.msg += "先出牌。\n"
                 //战况播报
                 this.sendWatchingMsg_Start();
@@ -543,10 +548,10 @@ class Desk(number: Long) {
             else {
                 bossHasMultipled = true;
 
-                at(players[index].number)
+                msg += at(players[index].number)
                 msg += "不要加倍。\n"
                 msg += "---------------\n"
-                at(players[currentPlayIndex].number);
+                msg += at(players[currentPlayIndex].number);
                 breakLine();
                 msg += "你是否要加倍？\n"
                 msg += "请用[加]或[不(加)]来回答。\n"
@@ -596,7 +601,7 @@ class Desk(number: Long) {
 
         for (card in list) {
             if (!mycardTmp.remove(card)) {
-                this.at(this.players[currentPlayIndex].number)
+                this.msg += this.at(this.players[currentPlayIndex].number)
                 this.breakLine()
                 this.msg += "真丢人，你就没有你要出的牌，会不会玩？\n"
                 return
@@ -683,22 +688,22 @@ class Desk(number: Long) {
             player.listCards()
 
             if (player.isOpenCard) {
-                this.at(player.number)
+                this.msg += this.at(player.number)
                 this.msg += "明牌："
-                this.listCardsOnDesk(player)
+                this.msg += this.listCardsOnDesk(player)
                 this.breakLine()
                 this.msg += "---------------\n"
             }
 
             if (player.card.size < 3) {
                 this.msg += "红色警报！红色警报！\n"
-                this.at(player.number)
+                this.msg += this.at(player.number)
                 this.msg += "仅剩下${player.card.size}张牌！\n"
                 this.msg += "---------------\n"
             }
 
             //this.msg << L"上回合";
-            this.at(this.players[currentPlayIndex].number)
+            this.msg += this.at(this.players[currentPlayIndex].number)
             this.msg += "打出" + this.lastCardType
             for(card in this.lastCard){
                 this.msg += "[$card]"
@@ -717,11 +722,11 @@ class Desk(number: Long) {
             this.msg += "剩余手牌数：\n"
             this.msg += this.listPlayers(1)
             this.msg += "现在轮到"
-            this.at(this.players[this.currentPlayIndex].number)
+            this.msg += this.at(this.players[this.currentPlayIndex].number)
             this.msg += "出牌。\n"
         }
         else {
-            this.at(this.players[this.currentPlayIndex].number)
+            this.msg += this.at(this.players[this.currentPlayIndex].number)
             this.breakLine()
             this.msg += "傻逼网友，打的什么几把玩意！学会出牌再打！\n"
         }
@@ -743,13 +748,13 @@ class Desk(number: Long) {
         //防止提示后过牌出现bug
         this.warningSent = false;
 
-        this.at(playNum)
+        this.msg += this.at(playNum)
         this.msg += "过牌，"
 
         this.setNextPlayerIndex();
 
         this.msg += "现在轮到";
-        this.at(this.players[this.currentPlayIndex].number)
+        this.msg += this.at(this.players[this.currentPlayIndex].number)
         this.msg += "出牌。\n"
 
         //观战播报
@@ -762,7 +767,7 @@ class Desk(number: Long) {
             return
         }
         if (this.state != STATE_GAMING) {
-            this.at(playNum)
+            this.msg += this.at(playNum)
             this.msg += "当前游戏状态无法弃牌（投降）！任意出牌后方可弃牌。"
             return;
         }
@@ -803,17 +808,17 @@ class Desk(number: Long) {
         }
 
         if (this.currentPlayIndex == index) {
-            this.at(playNum)
+            this.msg += this.at(playNum)
             this.msg += "弃牌，"
 
             this.setNextPlayerIndex()
 
             this.msg += "现在轮到"
-            this.at(this.players[this.currentPlayIndex].number)
+            this.msg += this.at(this.players[this.currentPlayIndex].number)
             this.msg += "出牌。"
             this.breakLine()
         } else {
-            this.at(playNum)
+            this.msg += this.at(playNum)
             this.msg += "弃牌。"
             this.breakLine()
         }
@@ -831,7 +836,7 @@ class Desk(number: Long) {
             return;
         }
         if (this.state > STATE_READYTOGO || this.state < STATE_START) {
-            this.at(playNum)
+            this.msg += this.at(playNum)
             this.breakLine()
             this.msg += "明牌只能在准备阶段使用！"
             return
@@ -843,27 +848,29 @@ class Desk(number: Long) {
             this.multiple += 2;
         }
 
-        this.at(playNum);
+        this.msg += this.at(playNum);
         this.msg += "明牌，积分倍数+2。\n"
 
-        this.listCardsOnDesk(player)
+        this.msg += this.listCardsOnDesk(player)
         this.breakLine()
 
         this.msg += "---------------\n"
         this.msg += "本局积分：${this.basic*this.multiple}"
     }
 
-    fun getPlayerInfo(playNum: Long) {
-        this.msg += "${Admin.readDataType()} ${Admin.readVersion()}\n"
-        this.at(playNum);
-        this.msg += "：";
+    fun getPlayerInfo(playNum: Long): String {
+        var ret = ""
+        ret += "${Admin.readDataType()} ${Admin.readVersion()}\n"
+        ret += this.at(playNum);
+        ret += "：";
         //this.breakLine();
-        this.msg += "${Admin.readWin(playNum)}胜${Admin.readLose(playNum)}负，"
-        this.msg += "积分${this.readScore(playNum)}。\n"
+        ret += "${Admin.readWin(playNum)}胜${Admin.readLose(playNum)}负，"
+        ret += "积分${this.readScore(playNum)}。\n"
+        return ret
     }
 
     fun getScore(playNum: Long) {
-        this.at(playNum)
+        this.msg += this.at(playNum)
         this.breakLine()
         if (Admin.getScore(playNum)) {
             this.msg += "这是今天的200点积分，祝你玩♂得开心！\n";
@@ -873,7 +880,7 @@ class Desk(number: Long) {
             this.msg += "你今日已经领取过积分！\n";
         }
         this.msg += "获取更多积分请明天再来或是和管理员";
-        this.at(Admin.readAdmin());
+        this.msg += this.at(Admin.readAdmin());
         this.msg += "进行py交易！\n";
     }
 
@@ -917,14 +924,14 @@ class Desk(number: Long) {
 
     fun join(playNum: Long) {
         if (this.getPlayer(playNum) != -1) {
-            this.at(playNum);
+            this.msg += this.at(playNum);
             this.breakLine();
             this.msg += "你已经加入游戏，不能重复加入！\n"
             return;
         }
 
         if (this.players.size == 3) {
-            this.at(playNum);
+            this.msg += this.at(playNum);
             this.breakLine();
             this.msg += "很遗憾，人数已满！\n"
             this.msg += "但你可以[加入观战]！\n"
@@ -957,7 +964,7 @@ class Desk(number: Long) {
         val player = Player(playNum)
         this.players += player
 
-        this.at(playNum)
+        this.msg += this.at(playNum)
         this.breakLine();
         this.msg += "加入成功，已有玩家${this.players.size}人，分别是：\n"
         this.msg += this.playersInfo()
@@ -965,7 +972,7 @@ class Desk(number: Long) {
         if (Admin.readScore(playNum) <= 0) {
             this.msg += "---------------"
             this.breakLine();
-            this.at(playNum);
+            this.msg += this.at(playNum);
             this.breakLine();
             this.msg += "你的积分为";
             this.readSendScore(playNum);
@@ -1009,21 +1016,21 @@ class Desk(number: Long) {
 
         //非弃牌玩家不能观战
         if (playIndex != -1 && !players[playIndex].isSurrender) {
-            this.at(playNum)
+            this.msg += this.at(playNum)
             this.breakLine()
             this.msg += "你已经加入游戏，请不要通过观战作弊！"
             this.breakLine()
             return
         }
         if (watchIndex != -1) {
-            this.at(playNum);
+            this.msg += this.at(playNum);
             this.breakLine();
             this.msg += "你已经加入观战模式，不能重复加入";
             this.breakLine();
             return;
         }
         if (this.players.size < 3) {
-            this.at(playNum)
+            this.msg += this.at(playNum)
             this.breakLine()
             this.msg += "游戏人数不足，当前无法加入观战模式。"
             this.breakLine()
@@ -1039,7 +1046,7 @@ class Desk(number: Long) {
         val index = this.getWatcher(playNum);
         if (index != -1) {
             watchers.removeAt(index)
-            this.at(playNum)
+            this.msg += this.at(playNum)
             this.breakLine()
             this.msg += "退出观战模式成功。"
         }
@@ -1191,8 +1198,8 @@ class Desk(number: Long) {
         }
     }
 
-    fun listCardsOnDesk(player: Player) {
-        player.card.forEach { msg += "[$it]"}
+    fun listCardsOnDesk(player: Player): String {
+        return player.card.map { "[$it]" }.joinToString("")
     }
 
     /*
@@ -1373,7 +1380,7 @@ void Desk::checkAFK() {
         var ret: String = ""
         for (i in 0..players.size - 1) {
             ret += "${i + 1}号玩家："
-            this.getPlayerInfo(players[i].number)
+            ret += this.getPlayerInfo(players[i].number)
             ret += "\n"
         }
         return ret

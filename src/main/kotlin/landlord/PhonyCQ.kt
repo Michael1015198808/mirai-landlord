@@ -25,13 +25,11 @@ suspend fun CQ_sendPrivateMsg(ac: Int, memberId: Long, str: String) {
 }
 
 fun GetPrivateProfileInt(k: String, v: String, default: Long, path: String): Long {
-    assert(false)
-    return 114514L
+    return default
 }
 
 fun GetPrivateProfileString(k: String, v: String, default: String, path: String): String {
-    assert(false)
-    return "114514"
+    return default
 }
 fun WritePrivateProfileString(k: String, v: String, new: String, path: String): Boolean {
     assert(false)

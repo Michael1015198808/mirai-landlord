@@ -58,7 +58,11 @@ object Casino {
         } else if (msg == "玩家列表") {
             desk.listPlayers(1);
         } else if (msg.startsWith("GO") || msg.startsWith("启动")) {
-            desk.startGame();
+            if(desk.getPlayer(playNum) != -1) {
+                desk.startGame();
+            } else {
+                desk.msg += "非玩家不能开始游戏！"
+            }
         } else if ((msg.startsWith("抢") || msg.startsWith("要")) && desk.state == STATE_BOSSING) {
             desk.getBoss(playNum);
         } else if (msg.startsWith("不") && desk.state == STATE_BOSSING) {
