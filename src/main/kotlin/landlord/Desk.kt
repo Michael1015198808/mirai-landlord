@@ -54,24 +54,25 @@ class Desk(number: Long) {
         return watchers.indexOfFirst { it.number == number }
     }
 
-    fun listPlayers(type: Int) {
+    fun listPlayers(type: Int): String {
         val hasType: Boolean = type.and(1) == 1
         val hasWin: Boolean  = type.and(2) == 1
 
         val score = basic * multiple
         val halfScore = score / 2
+        // TODO: Test mutablelist's speed and String's speend
+        var ret: MutableList<String> = mutableListOf()
 
         if (players.size < 3) {
-            msg += "游戏尚未开始，玩家列表：\n"
+            ret += "游戏尚未开始，玩家列表：\n"
         } else {
-            msg += "本局积分：${basic*multiple}\n"
-            msg += "出牌次数：$turn\n"
+            ret += "本局积分：${basic*multiple}\n"
+            ret += "出牌次数：$turn\n"
         }
-        var i: Int = 1
-        players.forEach { player ->
-            msg += "${i}号玩家："
+        for((i, player) in players.withIndex()) {
+            ret += "${i+1}号玩家："
             if (hasType) {
-                msg += "[" + if((i == bossIndex) && (state == STATE_GAMING)) "地主" else "农民" + "]"
+                ret += "[${if((i == bossIndex) && (state == STATE_GAMING)) "地主" else "农民"}]"
             }
 
             at(player.number)
@@ -81,20 +82,20 @@ class Desk(number: Long) {
                 var win_flag: Boolean? = null
                 if (player.isSurrender) {
                     add_score = -CONFIG_SURRENDER_PENALTY
-                    msg += "[投降，${add_score}分]"
+                    ret += "[投降，${add_score}分]"
                 } else if ((i == bossIndex).xor(farm_flag)) {
                     add_score = if(farm_flag) -score else -halfScore
-                    msg += "[失败，${add_score}分]"
+                    ret += "[失败，${add_score}分]"
 
-                    msg += "\n剩余手牌："
+                    ret += "\n剩余手牌："
                     listCardsOnDesk(player)
                 } else {
                     add_score = if(farm_flag) halfScore else score
-                    msg += "[胜利，+${add_score}分"
+                    ret += "[胜利，+${add_score}分"
 
                     //如果还有牌，就公开手牌
                     if (player.card.size > 0) {
-                        msg += "\n剩余手牌："
+                        ret += "\n剩余手牌："
                         listCardsOnDesk(player)
                     }
                 }
@@ -105,8 +106,9 @@ class Desk(number: Long) {
                     if(win_flag) Admin.addWin(player.number) else Admin.addLose(player.number)
                 }
             }
-            msg += "\n"
+            ret += "\n"
         }
+        return ret.joinToString("")
     }
 
     fun isCanWin(cardCount: Int, weights: List<Int>, type: String): Boolean {
@@ -484,17 +486,8 @@ class Desk(number: Long) {
                 //msg << L"第" << turn + 1 << L"回合：剩余手牌数：";
                 //breakLine();
 
-                // TODO: Add it back.
-                /*
-                for (unsigned i = 0; i < players.size(); i++) {
-                    msg << i + 1 << L"：";
-                    msg << L"[" << (i == bossIndex ? L"地主" : L"农民") << L"]"; //这里删除条件&& state == STATE_GAMING
-                    at(players[i]->number);
-                    msg << L"：" << static_cast<int>(players[i]->card.size());
-                    breakLine();
-                }
-                 */
-                breakLine();
+                msg += listPlayers(1)
+
                 msg += "请地主";
                 at(players[bossIndex].number)
                 msg += "先出牌。\n"
@@ -539,16 +532,7 @@ class Desk(number: Long) {
                 //this.breakLine();
                 this.msg += "本局积分：${this.basic*this.multiple}\n"
                 this.msg += "剩余手牌数：\n"
-                // TODO: add it back
-                /*
-                for (unsigned i = 0; i < this.players.size(); i++) {
-                    this.msg << i + 1 << L"：";
-                    this.msg << L"[" << (i == this.bossIndex ? L"地主" : L"农民") << L"]"; //这里删除条件&& state == STATE_GAMING
-                    this.at(this.players[i]->number);
-                    this.msg << L"：" << static_cast<int>(this.players[i]->card.size());
-                    this.breakLine();
-                }
-                 */
+                msg += this.listPlayers(1)
                 this.breakLine();
                 this.msg += "请地主"
                 this.at(players[this.bossIndex].number)
@@ -690,7 +674,7 @@ class Desk(number: Long) {
 
                 this.msg += "---------------\n"
                 this.msg += "分数结算：\n"
-                this.listPlayers(3);
+                this.msg += this.listPlayers(3);
 
                 Casino.gameOver(this.number);
                 return
@@ -731,13 +715,7 @@ class Desk(number: Long) {
             //this.breakLine();
             this.msg += "本局积分：${this.basic*this.multiple}\n"
             this.msg += "剩余手牌数：\n"
-            for (i in 0..this.players.size-1) {
-                this.msg += "${i+1}号玩家："
-                this.msg += "[" + (if(i == this.bossIndex && state == STATE_GAMING) "地主" else "农民") + "]"
-                this.at(this.players[i].number)
-                this.msg += "：${this.players[i].card.size}\n"
-            }
-            this.breakLine()
+            this.msg += this.listPlayers(1)
             this.msg += "现在轮到"
             this.at(this.players[this.currentPlayIndex].number)
             this.msg += "出牌。\n"
@@ -818,7 +796,7 @@ class Desk(number: Long) {
 
             this.msg += "---------------\n"
             this.msg += "分数结算：\n"
-            this.listPlayers(3);
+            this.msg += this.listPlayers(3);
 
             Casino.gameOver(this.number);
             return;
@@ -1080,14 +1058,7 @@ class Desk(number: Long) {
         watcher.breakLine()
         watcher.msg += "当前手牌信息："
         watcher.breakLine()
-        for (j in 0..this.players.size - 1) {
-            watcher.msg += "${j + 1}：";
-            watcher.msg += "[${if(j == this.bossIndex) "地主" else "农民"}]"
-            watcher.at(this.players[j].number)
-            watcher.breakLine()
-            watcher.msg += players[j].handCards()
-            watcher.breakLine()
-        }
+        watcher.msg += listPlayers(1)
         //不需要换行 watcher->breakLine();
     }
 
@@ -1109,19 +1080,7 @@ class Desk(number: Long) {
             watcher.breakLine()
             watcher.msg += "初始手牌："
             watcher.breakLine()
-            var j = 0
-            for (player in players) {
-                watcher.msg += "${j + 1}号玩家："
-                watcher.msg += "[" + (if(j == bossIndex) "地主" else "农民") + "]"
-                watcher.at(player.number)
-                watcher.breakLine()
-                for(card in players[j].card) {
-                    watcher.msg += "[" + card + "]"
-                }
-                ++j
-                watcher.breakLine()
-            }
-            watcher.breakLine()
+            watcher.msg += listPlayers(1)
         }
     }
 
@@ -1143,15 +1102,7 @@ class Desk(number: Long) {
             watcher.breakLine();
             watcher.msg += "当前剩余手牌："
             watcher.breakLine();
-            for(j in 0..this.players.size - 1) {
-                watcher.msg += "${j + 1}号玩家："
-                watcher.msg += "[" + if(j == this.bossIndex) "地主" else "农民" + "]"
-                watcher.at(this.players[j].number)
-                watcher.breakLine()
-
-                watcher.msg += players[j].handCards()
-                watcher.breakLine()
-            }
+            watcher.msg += this.listPlayers(1)
             watcher.breakLine();
             watcher.msg += "现在轮到"
             watcher.at(this.players[this.currentPlayIndex].number)
@@ -1222,7 +1173,7 @@ class Desk(number: Long) {
             this.msg += "---------------"
             this.breakLine();
 
-            this.listPlayers(1)
+            this.msg += this.listPlayers(1)
 
             this.shuffle()
             this.deal()
