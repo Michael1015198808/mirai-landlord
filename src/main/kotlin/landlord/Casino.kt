@@ -1,5 +1,7 @@
 package michael.landlord.main
 
+import net.mamoe.mirai.message.data.MessageChain.Companion.deserializeJsonToMessageChain
+
 object Casino {
     val desks: MutableList<Desk> = mutableListOf()
     fun getDesk(deskNum: Long): Int {
@@ -15,10 +17,10 @@ object Casino {
             return this.desks[deskIndex];
         }
     }
-    suspend fun game(subType: Boolean, deskNum: Long, playNum: Long, msgArray: String): Boolean {
+    suspend fun game(subType: Boolean, groupId: Long, playNum: Long, msgArray: String): Boolean {
         var msg = msgArray.trim().uppercase()
 
-        var desk = this.getOrCreatDesk(deskNum);
+        var desk = this.getOrCreatDesk(groupId);
 
         desk.subType = subType;
 
@@ -94,7 +96,7 @@ object Casino {
         else if (msg == "强制结束") {
             if (true || Admin.isAdmin(playNum)) {
                 desk.msg += "管理员强制结束本桌游戏。\n"
-                Casino.gameOver(deskNum)
+                Casino.gameOver(groupId)
                 desks.remove(desk)
             } else {
                 desk.msg += "你根本不是管理员！"
@@ -106,7 +108,6 @@ object Casino {
             return false
         }
 
-        System.out.println("Finished with ${desk.msg}")
         desk.sendMsg(subType)
         desk.sendPlayerMsg()
         desk.sendWatcherMsg()

@@ -14,8 +14,8 @@ class Watcher(playNum: Long) {
         msg += "\n"
     }
 
-    fun at(playNum: Long) {
+    fun at(playNum: Long): String {
         // TODO: Allow @people
-        msg += "@$playNum"
+        return "[mirai:at:$playNum]"
     }
 }

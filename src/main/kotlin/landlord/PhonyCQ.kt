@@ -3,14 +3,14 @@ package michael.landlord.main
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.contact.getMember
 import net.mamoe.mirai.Bot
+import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
 
 var bot: Bot? = null
 suspend fun CQ_sendGroupMsg(ac: Int, groupId: Long, str: String) {
-    println(bot)
-    bot!!.getGroup(groupId)?.sendMessage(str)
+    bot!!.getGroup(groupId)?.sendMessage(str.deserializeMiraiCode())
 }
 suspend fun CQ_sendDiscussMsg(ac: Int, groupId: Long, str: String) {
-    bot!!.getGroup(groupId)?.sendMessage(str)
+    bot!!.getGroup(groupId)?.sendMessage(str.deserializeMiraiCode())
 }
 suspend fun CQ_sendPrivateMsg(ac: Int, memberId: Long, str: String) {
     fun getMember(memberId: Long): User? {
@@ -21,7 +21,7 @@ suspend fun CQ_sendPrivateMsg(ac: Int, memberId: Long, str: String) {
         }
         return null
     }
-    getMember(memberId)?.sendMessage(str)
+    getMember(memberId)?.sendMessage(str.deserializeMiraiCode())
 }
 
 fun GetPrivateProfileInt(k: String, v: String, default: Long, path: String): Long {

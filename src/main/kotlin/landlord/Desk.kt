@@ -39,7 +39,7 @@ class Desk(number: Long) {
 
     fun at(playNum: Long): String {
         // TODO: Allow @people
-        return "@$playNum";
+        return "[mirai:at:$playNum]";
     }
 
     fun breakLine() {
@@ -1095,7 +1095,7 @@ class Desk(number: Long) {
         for (watcher in watchers) {
 
             //watcher->msg += "上回合";
-            watcher.at(this.players[currentPlayIndex].number)
+            watcher.msg += watcher.at(this.players[currentPlayIndex].number)
             watcher.msg += "打出" + this.lastCardType
             watcher.msg += this.lastCard.joinToString { "[$it]" }
             watcher.breakLine()
@@ -1112,7 +1112,7 @@ class Desk(number: Long) {
             watcher.msg += this.listPlayers(1)
             watcher.breakLine();
             watcher.msg += "现在轮到"
-            watcher.at(this.players[this.currentPlayIndex].number)
+            watcher.msg += watcher.at(this.players[this.currentPlayIndex].number)
             watcher.msg += "出牌。"
             watcher.breakLine();
         }
@@ -1120,22 +1120,22 @@ class Desk(number: Long) {
 
     fun sendWatchingMsg_Pass(playNum: Long) {
         for(watcher in watchers) {
-            watcher.at(playNum);
+            watcher.msg += watcher.at(playNum);
             watcher.msg += "过牌，";
 
             watcher.msg += "现在轮到";
-            watcher.at(this.players[this.currentPlayIndex].number);
+            watcher.msg += watcher.at(this.players[this.currentPlayIndex].number);
             watcher.msg += "出牌。\n"
         }
     }
 
     fun sendWatchingMsg_Surrender(playNum: Long) {
         for(watcher in watchers) {
-            watcher.at(playNum);
+            watcher.msg += watcher.at(playNum);
             watcher.msg += "弃牌，"
 
             watcher.msg += "现在轮到"
-            watcher.at(this.players[this.currentPlayIndex].number)
+            watcher.msg += watcher.at(this.players[this.currentPlayIndex].number)
             watcher.msg += "出牌。\n"
         }
     }
