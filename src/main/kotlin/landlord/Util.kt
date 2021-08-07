@@ -68,7 +68,8 @@ object Util {
         // TODO: return time
         return ""
     }
-    fun stringToCards(s: String): MutableList<String> {
+    fun stringToCards(raw_s: String): MutableList<String> {
+        val s = raw_s.replace("王炸", "大王小王").replace(" ", "")
         var cards = mutableListOf<String>()
         var i: Int = 0
         while(i < s.length) {

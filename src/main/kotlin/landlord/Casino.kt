@@ -47,8 +47,11 @@ object Casino {
         } else if (msg.startsWith("上桌") || msg.startsWith("上座")  || msg.startsWith("上机") || msg.startsWith("打牌")) {
             desk.join(playNum);
         } else if ((desk.state >= STATE_READYTOGO) &&
-            (msg.startsWith("出") || msg.startsWith("打"))) {//出牌阶段
-            desk.play(playNum, msg.substring(1))
+            (msg.startsWith("出") || msg.startsWith("打") || Regex("([3456789JQKA]|(10)|(小王)|(大王)|(王炸)+").matches(msg))) {//出牌阶段
+            if(msg.startsWith("出") || msg.startsWith("打")) {
+                msg = msg.substring(1)
+            }
+            desk.play(playNum, msg)
         } else if ((desk.state >= STATE_READYTOGO) &&
             (msg.startsWith("过") || msg.startsWith("过牌") || msg.startsWith("不出") ||
                 msg.startsWith("没有") || msg.startsWith("打不出") || msg.startsWith("要不起") ||

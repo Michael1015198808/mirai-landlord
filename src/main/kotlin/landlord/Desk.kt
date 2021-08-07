@@ -474,8 +474,6 @@ class Desk(number: Long) {
 
     fun play(playNum: Long, raw_msg: String) {
         val playIndex: Int = this.getPlayer(playNum)
-        val msg = raw_msg.replace(" ", "")
-        val length = msg.length
 
         if (playIndex == -1) {
             this.msg += "你不是玩家！"
@@ -490,15 +488,15 @@ class Desk(number: Long) {
             this.msg += "游戏尚未开始！"
             return
         }
-        if(length == 0) {
-            this.msg += "请跟上你要打出的牌，如\"出33344\"或\"打34567\""
-            return
-        }
-
         play_real(playIndex, Util.stringToCards(msg))
     }
 
     fun play_real(playIndex: Int, list: MutableList<String>) {
+        if(list.size == 0) {
+            this.msg += "请跟上你要打出的牌，如\"出33344\"或\"打34567\"或\"445566\""
+            return
+        }
+
         val player: Player = this.players[playIndex]
         var mycardTmp: MutableList<String> = player.card.toMutableList()
 
