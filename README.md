@@ -2,6 +2,8 @@
 
 **该项目目前仍为测试版**
 
+**Welcome for PRs! 欢迎PR，无论是增加功能、用可读性更高或耦合程度更低的方法改写部分实现都非常欢迎！**
+
 [Mirai机器人](https://github.com/mamoe/mirai)的斗地主插件，由 [Mirai Console](https://github.com/mamoe/mirai-console) 插件模板生成，使用 Kotlin + Gradle。
 
 源代码与更新履历：https://github.com/Michael1015198808/mirai-landlord
