@@ -1,8 +1,5 @@
 package michael.landlord.main
 
-import michael.landlord.PluginMain
-import net.mamoe.mirai.console.plugin.version
-
 object Casino {
     val desks: MutableList<Desk> = mutableListOf()
     fun getDesk(deskNum: Long): Int {
@@ -30,20 +27,6 @@ object Casino {
             return false
         } else if (msg.startsWith("斗地主命令") || msg.startsWith("斗地主指令") || msg.startsWith("斗地主操作")) {
             desk.commandList();
-        } else if (msg.startsWith("斗地主规则")) {
-            desk.msg +=
-                "斗地主规则：\n" +
-                    "打牌一次奖励${CONFIG_PLAY_BONUS}分" +
-                    "中途退出（弃牌）、挂机（抢地主、加倍${CONFIG_TIME_BOSS}秒，出牌${CONFIG_TIME_GAME}秒）倒扣${CONFIG_SURRENDER_PENALTY}分。\n" +
-                    "每局游戏的标准分计算方法为：初始值${CONFIG_INIT_SCORE}分，" +
-                    "最高最低分玩家的积分差额每有50分，" +
-                    "标准分加${CONFIG_BOTTOM_SCORE }分，但标准分不会超过${CONFIG_TOP_SCORE}分。\n" +
-                    "分数下限为负5亿，上限为正5亿。\n"
-        } else if (msg.startsWith("斗地主")) {
-            desk.msg += "斗地主${PluginMain.version}\n" +
-                "源代码与更新履历：https://github.com/Michael1015198808/mirai-landlord\n" +
-                "移植自（基于酷Q的C++斗地主）：https://github.com/doowzs/CQDouDiZhu\n" +
-                "原作者与2.0.1源代码：https://github.com/lsjspl/CQDouDiZhu"
         } else if (msg.startsWith("上桌") || msg.startsWith("上座")  || msg.startsWith("上机") || msg.startsWith("打牌")) {
             desk.join(playNum);
         } else if ((desk.state >= STATE_READYTOGO) &&
