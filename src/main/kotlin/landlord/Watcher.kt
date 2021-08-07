@@ -1,11 +1,14 @@
 package michael.landlord.main
 
-class Watcher(playNum: Long) {
+class Watchers() {
     var msg: String = ""
-    var number: Long = playNum
+    var watcherIds: MutableSet<Long> = mutableSetOf()
     suspend fun sendMsg() {
-        if (msg.trim() != "") {
-            Util.sendPrivateMsg(number, msg.trim())
+        msg = msg.trim()
+        if (msg != "") {
+            watcherIds.forEach {
+                Util.sendPrivateMsg(it, msg)
+            }
         }
         msg = ""
     }
@@ -15,7 +18,18 @@ class Watcher(playNum: Long) {
     }
 
     fun at(playNum: Long): String {
-        // TODO: Allow @people
         return "[mirai:at:$playNum]"
+    }
+
+    fun contains(playNum: Long): Boolean {
+        return watcherIds.contains(playNum)
+    }
+
+    fun remove(playNum: Long): Boolean {
+        return watcherIds.remove(playNum)
+    }
+
+    fun add(playNum: Long): Boolean {
+        return watcherIds.add(playNum)
     }
 }

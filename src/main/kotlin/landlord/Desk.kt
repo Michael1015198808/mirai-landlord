@@ -12,7 +12,7 @@ class Desk(number: Long) {
     var cards: MutableList<String> = cardDest.toMutableList()
     @Volatile
     var players: MutableList<Player> = mutableListOf()
-    var watchers: MutableList<Watcher> = mutableListOf()
+    var watchers: Watchers = Watchers()
     // TODO: 倒计时器
     // thread *counter;	//倒计时器
 
@@ -50,16 +50,13 @@ class Desk(number: Long) {
         return players.indexOfFirst { it.number == number }
     }
 
-    fun getWatcher(number: Long): Int {
-        return watchers.indexOfFirst { it.number == number }
-    }
-
     fun listPlayers(type: Int): String {
-        val hasType: Boolean = type.and(1) == 1
+        val hasType: Boolean = type.and(1) > 0
         if(hasType && state < STATE_READYTOGO) {
             System.err.println("type=$type but state < STATE_GAMING")
         }
-        val hasWin: Boolean  = type.and(2) == 1
+        val hasWin: Boolean  = type.and(2) > 0
+        val listHandCards: Boolean  = type.and(4) > 0
 
         val score = basic * multiple
         val halfScore = score / 2
@@ -110,6 +107,9 @@ class Desk(number: Long) {
                 }
             } else {
                 ret += "：${player.card.size}张手牌"
+                if (listHandCards) {
+                    ret += player.handCards()
+                }
             }
             ret += "\n"
         }
@@ -239,7 +239,7 @@ class Desk(number: Long) {
     }
 
     suspend fun sendWatcherMsg() {
-        watchers.forEach{ it.sendMsg() }
+        watchers.sendMsg()
     }
 
     fun shuffle() {
@@ -914,9 +914,8 @@ class Desk(number: Long) {
         }
     }
 
-    fun joinWatching(playNum: Long) {
+    fun joinWatching(playNum: Long): Boolean {
         val playIndex = this.getPlayer(playNum)
-        val watchIndex = this.getWatcher(playNum)
 
         //非弃牌玩家不能观战
         if (playIndex != -1 && !players[playIndex].isSurrender) {
@@ -924,32 +923,29 @@ class Desk(number: Long) {
             this.breakLine()
             this.msg += "你已经加入游戏，请不要通过观战作弊！"
             this.breakLine()
-            return
+            return false
         }
-        if (watchIndex != -1) {
+        if (watchers.contains(playNum)) {
             this.msg += this.at(playNum);
             this.breakLine();
             this.msg += "你已经加入观战模式，不能重复加入";
             this.breakLine();
-            return;
+            return false
         }
         if (this.players.size < 3) {
             this.msg += this.at(playNum)
             this.breakLine()
             this.msg += "游戏人数不足，当前无法加入观战模式。"
             this.breakLine()
-            return;
+            return false
         }
 
-        val watcher = Watcher(playNum)
-        this.watchers += watcher
-        sendWatchingMsg_Join(playNum)
+        return this.watchers.add(playNum)
     }
 
     fun exitWatching(playNum: Long) {
-        val index = this.getWatcher(playNum);
-        if (index != -1) {
-            watchers.removeAt(index)
+        if (watchers.contains(playNum)) {
+            watchers.remove(playNum)
             this.msg += this.at(playNum)
             this.breakLine()
             this.msg += "退出观战模式成功。"
@@ -957,102 +953,90 @@ class Desk(number: Long) {
     }
 
     fun sendWatchingMsg_Join(joinNum: Long) {
-        val index = getWatcher(joinNum)
-        val watcher = watchers[index]
+        val builder = StringBuilder()
 
-        watcher.msg += "加入观战模式成功。"
-        watcher.breakLine()
-
-        watcher.msg += "---------------"
+        builder.append("加入观战模式成功。\n")
+        builder.append("---------------\n")
         //watcher->breakLine();
         //watcher->msg += "本局积分：" << this->multiple += " x " << this->basic += " = " << this->basic*this->multiple;
-        watcher.breakLine()
-        watcher.msg += "当前手牌信息："
-        watcher.breakLine()
-        watcher.msg += listPlayers(1)
+        builder.append("当前手牌信息：\n")
+        builder.append(listPlayers(4))
         //不需要换行 watcher->breakLine();
+        suspend { CQ_sendPrivateMsg(0, joinNum, builder.toString()) }
     }
 
     fun sendWatchingMsg_Start() {
-        for(watcher in watchers) {
-            // TODO: 生成一次msg后所有watcher共享
-            if (! isSecondCallForBoss) {
-                watcher.msg += "斗地主游戏开始"
-            } else {
-                watcher.msg += "重新发牌"
-            }
-            watcher.breakLine();
-            //这里不需要this->setNextPlayerIndex();
-            watcher.msg += "---------------"
-            //watcher->breakLine();
-            //watcher->msg += "第" << this->turn + 1 += "回合：";
-            //watcher->breakLine();
-            //watcher->msg += "本局积分：" << this->multiple += " x " << this->basic += " = " << this->basic*this->multiple;
-            watcher.breakLine()
-            watcher.msg += "初始手牌："
-            watcher.breakLine()
-            watcher.msg += listPlayers(1)
+        val builder = StringBuilder()
+        if (! isSecondCallForBoss) {
+            builder.append("斗地主游戏开始\n")
+        } else {
+            builder.append("重新发牌\n")
         }
+        //这里不需要this->setNextPlayerIndex();
+        builder.append("---------------\n")
+        //watcher->breakLine();
+        //watcher->msg += "第" << this->turn + 1 += "回合：";
+        //watcher->breakLine();
+        //watcher->msg += "本局积分：" << this->multiple += " x " << this->basic += " = " << this->basic*this->multiple;
+        builder.append("初始手牌：\n")
+        builder.append(listPlayers(4))
+        watchers.msg = builder.toString()
     }
 
     fun sendWatchingMsg_Play() {
-        for (watcher in watchers) {
+        val builder = StringBuilder()
 
-            //watcher->msg += "上回合";
-            watcher.msg += watcher.at(this.players[currentPlayIndex].number)
-            watcher.msg += "打出" + this.lastCardType
-            watcher.msg += this.lastCard.joinToString { "[$it]" }
-            watcher.breakLine()
+        //watcher->msg += "上回合";
+        builder.append(this.at(this.players[currentPlayIndex].number))
+        builder.append("打出" + this.lastCardType)
+        builder.append(this.lastCard.joinToString { "[$it]" })
+        //这里不需要this->setNextPlayerIndex();
+        builder.append("---------------\n")
+        //watcher->breakLine();
+        //watcher->msg += "第" << this->turn + 1 += "回合：";
+        //watcher->breakLine();
+        //watcher->msg += "本局积分：" << this->multiple += " x " << this->basic += " = " << this->basic*this->multiple;
+        builder.append("当前剩余手牌：\n")
+        builder.append(listPlayers(4))
+        builder.append("现在轮到\n")
+        builder.append(this.at(this.players[this.currentPlayIndex].number))
+        builder.append("出牌。")
 
-            //这里不需要this->setNextPlayerIndex();
-            watcher.msg += "---------------";
-            //watcher->breakLine();
-            //watcher->msg += "第" << this->turn + 1 += "回合：";
-            //watcher->breakLine();
-            //watcher->msg += "本局积分：" << this->multiple += " x " << this->basic += " = " << this->basic*this->multiple;
-            watcher.breakLine();
-            watcher.msg += "当前剩余手牌："
-            watcher.breakLine();
-            watcher.msg += this.listPlayers(1)
-            watcher.breakLine();
-            watcher.msg += "现在轮到"
-            watcher.msg += watcher.at(this.players[this.currentPlayIndex].number)
-            watcher.msg += "出牌。"
-            watcher.breakLine();
-        }
+        watchers.msg = builder.toString()
     }
 
     fun sendWatchingMsg_Pass(playNum: Long) {
-        for(watcher in watchers) {
-            watcher.msg += watcher.at(playNum);
-            watcher.msg += "过牌，";
+        val builder = StringBuilder()
 
-            watcher.msg += "现在轮到";
-            watcher.msg += watcher.at(this.players[this.currentPlayIndex].number);
-            watcher.msg += "出牌。\n"
-        }
+        builder.append(this.at(playNum))
+        builder.append("过牌，")
+        builder.append("现在轮到")
+        builder.append(this.at(this.players[this.currentPlayIndex].number))
+        builder.append("出牌。\n")
+
+        watchers.msg = builder.toString()
     }
 
     fun sendWatchingMsg_Surrender(playNum: Long) {
-        for(watcher in watchers) {
-            watcher.msg += watcher.at(playNum);
-            watcher.msg += "弃牌，"
+        val builder = StringBuilder()
 
-            watcher.msg += "现在轮到"
-            watcher.msg += watcher.at(this.players[this.currentPlayIndex].number)
-            watcher.msg += "出牌。\n"
-        }
+        builder.append(this.at(playNum))
+        builder.append("弃牌，")
+        builder.append("现在轮到")
+        builder.append(this.at(this.players[this.currentPlayIndex].number))
+        builder.append("出牌。\n")
+
+        watchers.msg = builder.toString()
     }
 
     fun sendWatchingMsg_Over() {
-        for (watcher in watchers) {
+        val builder = StringBuilder()
 
-            watcher.msg += "斗地主游戏结束，";
-            watcher.msg += if (this.whoIsWinner == 1) "地主赢了" else "农民赢了"
-            watcher.breakLine()
-            watcher.msg += "退出观战模式。"
-            watcher.breakLine()
-        }
+        builder.append("斗地主游戏结束，")
+        builder.append(if (this.whoIsWinner == 1) "地主赢了" else "农民赢了")
+        builder.append("\n退出观战模式。\n")
+
+        watchers.msg = builder.toString()
     }
 
 

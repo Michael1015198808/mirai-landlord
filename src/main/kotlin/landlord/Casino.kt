@@ -86,7 +86,9 @@ object Casino {
                 desk.getPlayerInfo(playNum);
         } */
         else if (msg.startsWith("加入观战") || msg.startsWith("观战")) {
-            desk.joinWatching(playNum)
+            if(desk.joinWatching(playNum)) {
+                desk.sendWatchingMsg_Join(playNum)
+            }
         } else if (msg.startsWith("退出观战")) {
             desk.exitWatching(playNum)
         } /*
