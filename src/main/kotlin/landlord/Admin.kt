@@ -196,11 +196,10 @@ object Admin {
 
     //私人查询信息
     fun getPlayerInfo(playNum: Long) {
-        var msg = readDataType() + " " + Admin.readVersion() + "\n" +
-            "[CQ:at,qq=" + playNum + "]：" +
-            readWin(playNum) + "胜" +
-            readLose(playNum) + "负，" +
-            "积分" + (readScore(playNum) - 500000000L).toString()
+        var msg = """[CQ:at,qq=${playNum }]：\n
+                ${readWin(playNum)}胜
+                ${readLose(playNum)}负，
+            积分${(readScore(playNum) - 500000000L)}""".trimIndent()
 
         suspend { Util.sendPrivateMsg(playNum, msg) }
     }

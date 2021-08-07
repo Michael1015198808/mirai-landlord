@@ -33,7 +33,6 @@ const val CONFIG_TIME_BOSS          = 30
 const val CONFIG_TIME_MULTIPLE      = 30
 const val CONFIG_TIME_GAME          = 60
 const val CONFIG_TIME_WARNING       = 15
-const val CONFIG_VERSION = "5.0.1 master 201802120029"
 
 const val allotReg      = "设置积分(\\d+)=(\\d+)"
 const val allotReg2     = "设置积分(\\d+)=-(\\d+)"

@@ -764,7 +764,6 @@ class Desk(number: Long) {
 
     fun getPlayerInfo(playNum: Long): String {
         var ret = ""
-        ret += "${Admin.readDataType()} ${Admin.readVersion()}\n"
         ret += this.at(playNum);
         ret += "：";
         //this.breakLine();

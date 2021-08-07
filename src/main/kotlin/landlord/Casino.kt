@@ -1,6 +1,7 @@
 package michael.landlord.main
 
-import net.mamoe.mirai.message.data.MessageChain.Companion.deserializeJsonToMessageChain
+import michael.landlord.PluginMain
+import net.mamoe.mirai.console.plugin.version
 
 object Casino {
     val desks: MutableList<Desk> = mutableListOf()
@@ -39,8 +40,7 @@ object Casino {
                     "标准分加${CONFIG_BOTTOM_SCORE }分，但标准分不会超过${CONFIG_TOP_SCORE}分。\n" +
                     "分数下限为负5亿，上限为正5亿。\n"
         } else if (msg.startsWith("斗地主")) {
-            desk.msg += "斗地主${CONFIG_VERSION}\n" +
-                "${Admin.readDataType()} ${Admin.readVersion()}\n" + // << L" CST"
+            desk.msg += "斗地主${PluginMain.version}\n" +
                 "源代码与更新履历：https://github.com/Michael1015198808/mirai-landlord\n" +
                 "移植自（基于酷Q的C++斗地主）：https://github.com/doowzs/CQDouDiZhu\n" +
                 "原作者与2.0.1源代码：https://github.com/lsjspl/CQDouDiZhu"
