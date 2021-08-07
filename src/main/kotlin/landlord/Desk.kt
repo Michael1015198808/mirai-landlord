@@ -490,7 +490,7 @@ class Desk(number: Long) {
             this.msg += "游戏尚未开始！"
             return
         }
-        if(length < 2) {
+        if(length == 0) {
             this.msg += "请跟上你要打出的牌，如\"出33344\"或\"打34567\""
             return
         }
