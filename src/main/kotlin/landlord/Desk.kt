@@ -486,7 +486,7 @@ class Desk(number: Long) {
             this.msg += "游戏尚未开始！"
             return
         }
-        play_real(playIndex, Util.stringToCards(msg))
+        play_real(playIndex, Util.stringToCards(raw_msg))
     }
 
     fun play_real(playIndex: Int, list: MutableList<String>) {
