@@ -40,11 +40,13 @@ object taskManageCommand : CompositeCommand(
     @Description("在本群启动斗地主")
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.on() {
         LandlordConfig.add(fromEvent.group.id)
+        fromEvent.group.sendMessage("本群${fromEvent.group.id}已开启斗地主功能！")
     }
     @SubCommand("关闭", "off")
     @Description("在本群关闭斗地主")
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.off() {
         LandlordConfig.remove(fromEvent.group.id)
+        fromEvent.group.sendMessage("本群${fromEvent.group.id}已关闭斗地主功能！")
     }
     @SubCommand("信息", "info")
     @Description("显示该项目信息")
@@ -74,7 +76,7 @@ object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.landlord",
         name = "mirai斗地主插件",
-        version = "0.2.9"
+        version = "0.2.10"
     ) {
         author("鄢振宇https://github.com/michael1015198808")
         info("mirai的斗地主插件")
