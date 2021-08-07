@@ -47,16 +47,16 @@ object Casino {
         } else if (msg.startsWith("上桌") || msg.startsWith("上座")  || msg.startsWith("上机") || msg.startsWith("打牌")) {
             desk.join(playNum);
         } else if ((desk.state >= STATE_READYTOGO) &&
-            (msg.startsWith("出") || msg.startsWith("打") || Regex("([3456789JQKA]|(10)|(小王)|(大王)|(王炸)+").matches(msg))) {//出牌阶段
+            (msg.startsWith("过") || msg.startsWith("不出") ||
+                msg.startsWith("没有") || msg.startsWith("打不出") || msg.startsWith("要不起") ||
+                msg.startsWith("不要") || msg.startsWith("PASS") )) {//跳过出牌阶段
+            desk.discard(playNum);
+        } else if ((desk.state >= STATE_READYTOGO) &&
+            (msg.startsWith("出") || msg.startsWith("打") || Regex("([3456789JQKA2]|10|小王|大王|王炸)+").matches(msg))) {//出牌阶段
             if(msg.startsWith("出") || msg.startsWith("打")) {
                 msg = msg.substring(1)
             }
             desk.play(playNum, msg)
-        } else if ((desk.state >= STATE_READYTOGO) &&
-            (msg.startsWith("过") || msg.startsWith("过牌") || msg.startsWith("不出") ||
-                msg.startsWith("没有") || msg.startsWith("打不出") || msg.startsWith("要不起") ||
-                msg.startsWith("不要") || msg.startsWith("PASS") )) {//跳过出牌阶段
-            desk.discard(playNum);
         } else if (msg.startsWith("退桌") || msg.startsWith("下桌")
             || msg.startsWith("不玩了"))  {//结束游戏
             desk.exit(playNum);

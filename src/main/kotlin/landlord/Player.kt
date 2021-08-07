@@ -7,10 +7,6 @@ class Player(playerNum: Long) {
     var isReady: Boolean = false
     var isOpenCard: Boolean = false
     var isSurrender: Boolean = false
-    fun listCards() {
-        card.forEach {msg += "[$it]"}
-    }
-
     suspend fun sendMsg() {
         if (msg != "") {
             Util.sendPrivateMsg(number, msg.trim())
@@ -23,6 +19,6 @@ class Player(playerNum: Long) {
     }
 
     fun handCards(): String {
-        return this.card.joinToString { "[$it]" }
+        return this.card.joinToString("") { "[$it]" }
     }
 }

@@ -88,7 +88,7 @@ class Desk(number: Long) {
                     ret += "[失败，${add_score}分]"
 
                     ret += "\n剩余手牌："
-                    ret += listCardsOnDesk(player)
+                    ret += player.handCards()
                 } else {
                     add_score = if(farm_flag) halfScore else score
                     ret += "[胜利，+${add_score}分"
@@ -96,7 +96,7 @@ class Desk(number: Long) {
                     //如果还有牌，就公开手牌
                     if (player.card.size > 0) {
                         ret += "\n剩余手牌："
-                        ret += listCardsOnDesk(player)
+                        ret += player.handCards()
                     }
                 }
                 assert(win_flag != null)
@@ -338,26 +338,18 @@ class Desk(number: Long) {
 
         msg += at(playerBoss.number)
         msg += "是地主，底牌是：";
-        msg +=
-            "[" + cards[53] + "]" +
-                "[" + cards[52] + "]" +
-                "[" + cards[51] + "]。"
+        msg += cards.subList(51, 54).joinToString("") { "[$it]" }
         breakLine();
         msg += Util.crossline()
         breakLine();
 
-        for (i in 0..2) {
-            playerBoss.card += cards[53 - i]
-        }
+        playerBoss.card.addAll(cards.subList(51, 54))
 
         playerBoss.card.sortBy { Util.findFlag(it) }
 
         //playerBoss->msg << L"你是地主，收到底牌：";
         //playerBoss->breakLine();
-        for(card in playerBoss.card) {
-            playerBoss.msg += "[" + card + "]"
-        }
-        playerBoss.breakLine()
+        playerBoss.msg += playerBoss.handCards()
 
         //这里的状态声明移动到了加倍(dontMultiple)的最后一个人语句哪里。
     }
@@ -585,12 +577,12 @@ class Desk(number: Long) {
                 return
             }
 
-            player.listCards()
+            player.msg += player.handCards()
 
             if (player.isOpenCard) {
                 this.msg += this.at(player.number)
                 this.msg += "明牌："
-                this.msg += this.listCardsOnDesk(player)
+                this.msg += player.handCards()
                 this.breakLine()
                 this.msg += Util.crossline()
             }
@@ -749,7 +741,7 @@ class Desk(number: Long) {
         this.msg += this.at(playNum);
         this.msg += "明牌，积分倍数+2。\n"
 
-        this.msg += this.listCardsOnDesk(player)
+        this.msg += player.handCards()
         this.breakLine()
 
         this.msg += Util.crossline()
@@ -982,7 +974,7 @@ class Desk(number: Long) {
         //watcher->msg += "上回合";
         builder.append(this.at(this.players[currentPlayIndex].number))
         builder.append("打出" + this.lastCardType)
-        builder.append(this.lastCard.joinToString { "[$it]" })
+        builder.append(this.lastCard.joinToString("") { "[$it]" })
         //这里不需要this->setNextPlayerIndex();
         builder.append(Util.crossline())
         //watcher->breakLine();
@@ -1076,10 +1068,6 @@ class Desk(number: Long) {
                 this.msg += playersInfo()
             }
         }
-    }
-
-    fun listCardsOnDesk(player: Player): String {
-        return player.card.map { "[$it]" }.joinToString("")
     }
 
     /*
