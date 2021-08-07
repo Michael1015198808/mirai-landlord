@@ -79,4 +79,7 @@ object Util {
         }
         return cards
     }
+    fun crossline():String {
+        return "-".repeat(30) + "\n"
+    }
 }

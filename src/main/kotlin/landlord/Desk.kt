@@ -255,9 +255,8 @@ class Desk(number: Long) {
         //防止bug
         warningSent = false
 
-        msg +=
-            "下面进入抢地主环节，倒计时开始。\n" +
-                "--------------------------\n"
+        msg += "下面进入抢地主环节，倒计时开始。\n"
+        msg += Util.crossline()
 
         val index = Random.nextInt(0, 3)
 
@@ -309,9 +308,8 @@ class Desk(number: Long) {
                 return
             }
             else if (currentPlayIndex == bossIndex) {
-                msg +=
-                    "第1次抢地主失败，重新发牌。\n" +
-                        "------------------------\n"
+                msg += "第1次抢地主失败，重新发牌。\n"
+                msg += Util.crossline()
                 isSecondCallForBoss = true
                 shuffle();
                 deal();
@@ -322,7 +320,7 @@ class Desk(number: Long) {
                 msg += at(players[index].number);
                 msg += "不抢地主。";
                 breakLine();
-                msg += "---------------";
+                msg += Util.crossline()
                 breakLine();
                 msg += at(players[currentPlayIndex].number);
                 breakLine();
@@ -345,7 +343,7 @@ class Desk(number: Long) {
                 "[" + cards[52] + "]" +
                 "[" + cards[51] + "]。"
         breakLine();
-        msg += "---------------"
+        msg += Util.crossline()
         breakLine();
 
         for (i in 0..2) {
@@ -372,7 +370,7 @@ class Desk(number: Long) {
         warningSent = false;
 
         msg += "抢地主环节结束，下面进入加倍环节。\n"
-        msg += "---------------\n"
+        msg += Util.crossline()
         msg += at(players[bossIndex].number)
         breakLine()
         msg += "你是否要加倍？\n"
@@ -395,12 +393,12 @@ class Desk(number: Long) {
                 msg += at(players[index].number);
                 msg += "要加倍。\n"
                 msg += "本局积分：${basic*multiple}\n"
-                msg += "---------------\n"
+                msg += Util.crossline()
 
                 state = STATE_READYTOGO;
 
                 msg += "加倍环节结束，斗地主正式开始。\n"
-                msg += "---------------\n"
+                msg += Util.crossline()
                 //msg << L"第" << turn + 1 << L"回合：剩余手牌数：";
                 //breakLine();
 
@@ -417,8 +415,8 @@ class Desk(number: Long) {
 
                 msg += at(players[index].number)
                 msg += "要加倍。\n"
-                msg += "本局积分：${basic*multiple}"
-                this.msg += "\n---------------\n";
+                msg += "本局积分：${basic*multiple}\n"
+                this.msg += Util.crossline()
                 msg += this.at(players[currentPlayIndex].number);
                 this.msg += "你是否要加倍？\n"
                 this.msg += "请用[加]或[不(加)]来回答。\n"
@@ -440,12 +438,12 @@ class Desk(number: Long) {
             if (this.currentPlayIndex == this.bossIndex && bossHasMultipled) {
                 msg += this.at(this.players[index].number);
                 this.msg += "不要加倍。\n"
-                this.msg += "---------------\n"
+                this.msg += Util.crossline()
 
                 this.state = STATE_READYTOGO
 
                 this.msg += "加倍环节结束，斗地主正式开始。\n"
-                this.msg += "---------------\n"
+                this.msg += Util.crossline()
                 //this.msg << L"第" << this.turn + 1 << L"回合：";
                 //this.breakLine();
                 this.msg += "本局积分：${this.basic*this.multiple}\n"
@@ -463,7 +461,7 @@ class Desk(number: Long) {
 
                 msg += at(players[index].number)
                 msg += "不要加倍。\n"
-                msg += "---------------\n"
+                msg += Util.crossline()
                 msg += at(players[currentPlayIndex].number);
                 breakLine();
                 msg += "你是否要加倍？\n"
@@ -548,13 +546,13 @@ class Desk(number: Long) {
                 this.msg += "打出王炸，积分倍数+2\n"
                 // TODO: check copy-and-paste
                 this.msg += "本局积分：${this.basic*this.multiple}\n"
-                this.msg += "---------------\n"
+                this.msg += Util.crossline()
             } else if (type == "炸弹") {
                 this.multiple += 1;
 
                 this.msg += "打出炸弹，积分倍数+1\n"
                 this.msg += "本局积分：${this.basic*this.multiple}\n"
-                this.msg += "---------------\n"
+                this.msg += Util.crossline()
             }
 
             if (mycardTmp.size == 0) {//赢了。
@@ -568,18 +566,18 @@ class Desk(number: Long) {
 
                 if (this.farmCount == 0 && this.whoIsWinner == 1) {
                     this.multiple *= 2;
-                    this.msg += "---------------\n"
+                    this.msg += Util.crossline()
                     this.msg += "本局出现春天，积分倍数x2\n"
                     this.msg += "本局积分：${this.basic*this.multiple}\n"
                 } else if (this.bossCount == 1 && this.whoIsWinner == 2) {
                     this.multiple *= 2;
-                    this.msg += "---------------\n"
+                    this.msg += Util.crossline()
                     this.msg += "本局出现反春天，积分倍数x2\n"
                     this.msg += "本局积分：${this.basic*this.multiple}\n"
                 }
 
 
-                this.msg += "---------------\n"
+                this.msg += Util.crossline()
                 this.msg += "分数结算：\n"
                 this.msg += this.listPlayers(3);
 
@@ -594,14 +592,14 @@ class Desk(number: Long) {
                 this.msg += "明牌："
                 this.msg += this.listCardsOnDesk(player)
                 this.breakLine()
-                this.msg += "---------------\n"
+                this.msg += Util.crossline()
             }
 
             if (player.card.size < 3) {
                 this.msg += "红色警报！红色警报！\n"
                 this.msg += this.at(player.number)
                 this.msg += "仅剩下${player.card.size}张牌！\n"
-                this.msg += "---------------\n"
+                this.msg += Util.crossline()
             }
 
             //this.msg << L"上回合";
@@ -617,11 +615,9 @@ class Desk(number: Long) {
 
             this.setNextPlayerIndex()
 
-            this.msg += "---------------\n"
+            this.msg += Util.crossline()
             //this.msg << L"第" << this.turn + 1 << L"回合：";
             //this.breakLine();
-            this.msg += "本局积分：${this.basic*this.multiple}\n"
-            this.msg += "剩余手牌数：\n"
             this.msg += this.listPlayers(1)
             this.msg += "现在轮到"
             this.msg += this.at(this.players[this.currentPlayIndex].number)
@@ -701,7 +697,7 @@ class Desk(number: Long) {
 
             //弃牌不检测春天
 
-            this.msg += "---------------\n"
+            this.msg += Util.crossline()
             this.msg += "分数结算：\n"
             this.msg += this.listPlayers(3);
 
@@ -756,7 +752,7 @@ class Desk(number: Long) {
         this.msg += this.listCardsOnDesk(player)
         this.breakLine()
 
-        this.msg += "---------------\n"
+        this.msg += Util.crossline()
         this.msg += "本局积分：${this.basic*this.multiple}"
     }
 
@@ -871,7 +867,7 @@ class Desk(number: Long) {
         this.msg += this.playersInfo()
 
         if (Admin.readScore(playNum) <= 0) {
-            this.msg += "---------------"
+            this.msg += Util.crossline()
             this.breakLine();
             this.msg += this.at(playNum);
             this.breakLine();
@@ -953,7 +949,7 @@ class Desk(number: Long) {
         val builder = StringBuilder()
 
         builder.append("加入观战模式成功。\n")
-        builder.append("---------------\n")
+        builder.append(Util.crossline())
         //watcher->breakLine();
         //watcher->msg += "本局积分：" << this->multiple += " x " << this->basic += " = " << this->basic*this->multiple;
         builder.append("当前手牌信息：\n")
@@ -970,7 +966,7 @@ class Desk(number: Long) {
             builder.append("重新发牌\n")
         }
         //这里不需要this->setNextPlayerIndex();
-        builder.append("---------------\n")
+        builder.append(Util.crossline())
         //watcher->breakLine();
         //watcher->msg += "第" << this->turn + 1 += "回合：";
         //watcher->breakLine();
@@ -988,7 +984,7 @@ class Desk(number: Long) {
         builder.append("打出" + this.lastCardType)
         builder.append(this.lastCard.joinToString { "[$it]" })
         //这里不需要this->setNextPlayerIndex();
-        builder.append("---------------\n")
+        builder.append(Util.crossline())
         //watcher->breakLine();
         //watcher->msg += "第" << this->turn + 1 += "回合：";
         //watcher->breakLine();
@@ -1062,13 +1058,12 @@ class Desk(number: Long) {
 
             //this->msg += "准备环节可以进行[明牌]操作，明牌会使积分倍数 + 2，请谨慎操作！";
             //this->breakLine();
-            this.msg += "---------------"
+            this.msg += Util.crossline()
             this.breakLine();
-
-            this.msg += this.listPlayers(1)
 
             this.shuffle()
             this.deal()
+            this.msg += this.listPlayers(1)
 
             this.createBoss();
         } else {

@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "org.example"
-version = "0.2.5"
+version = "0.2.6"
 
 repositories {
     mavenLocal()
