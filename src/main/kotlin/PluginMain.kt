@@ -78,7 +78,7 @@ object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.landlord",
         name = "mirai斗地主插件",
-        version = "0.3.0"
+        version = "0.3.1"
     ) {
         author("鄢振宇https://github.com/michael1015198808")
         info("mirai的斗地主插件")

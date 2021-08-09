@@ -69,8 +69,10 @@ class Desk(number: Long) {
             ret += "出牌次数：$turn\n"
         }
         val landlord_flag: Boolean = (whoIsWinner == 1) //如果是地主赢了
-        if(landlord_flag) ++PluginMain.globalStatisticsData.landlord_wins
-        else ++PluginMain.globalStatisticsData.landlord_loses
+        if(hasWin) {
+            if(landlord_flag) ++PluginMain.globalStatisticsData.landlord_wins
+            else ++PluginMain.globalStatisticsData.landlord_loses
+        }
         for((i, player) in players.withIndex()) {
             ret += "${i+1}号玩家："
             if (state >= STATE_READYTOGO) {
