@@ -1,6 +1,6 @@
 package michael.landlord.main
 
-import kotlin.math.min
+import michael.landlord.PluginMain
 import kotlin.random.Random
 
 class Desk(number: Long) {
@@ -59,16 +59,18 @@ class Desk(number: Long) {
         val listHandCards: Boolean  = type.and(4) > 0
 
         val score = basic * multiple
-        val halfScore = score / 2
         // TODO: Test mutablelist's speed and String's speend
         var ret: MutableList<String> = mutableListOf()
 
         if (players.size < 3) {
             ret += "游戏尚未开始，玩家列表：\n"
         } else {
-            ret += "本局积分：${basic*multiple}\n"
+            ret += "本局积分：${score}\n"
             ret += "出牌次数：$turn\n"
         }
+        val landlord_flag: Boolean = (whoIsWinner == 1) //如果是地主赢了
+        if(landlord_flag) ++PluginMain.globalStatisticsData.landlord_wins
+        else ++PluginMain.globalStatisticsData.landlord_loses
         for((i, player) in players.withIndex()) {
             ret += "${i+1}号玩家："
             if (state >= STATE_READYTOGO) {
@@ -77,21 +79,22 @@ class Desk(number: Long) {
 
             ret += at(player.number)
             if (hasWin) {
-                val landlord_flag: Boolean = (whoIsWinner == 1) //如果是农民赢了
                 var add_score: Long
-                var win_flag: Boolean? = null
                 if (player.isSurrender) {
-                    add_score = -CONFIG_SURRENDER_PENALTY
+                    add_score = -CONFIG_SURRENDER_PENALTY * multiple
                     ret += "[投降，${add_score}分]"
+                    PluginMain.addLose(player.number, i == bossIndex)
                 } else if ((i == bossIndex).xor(landlord_flag)) {
-                    add_score = if(landlord_flag) -score else -halfScore
+                    add_score = -score * if(i == bossIndex) 2 else 1
                     ret += "[失败，${add_score}分]"
+                    PluginMain.addLose(player.number, i == bossIndex)
 
                     ret += "\n剩余手牌："
                     ret += player.handCards()
                 } else {
-                    add_score = if(landlord_flag) halfScore else score
+                    add_score = score * if(i == bossIndex) 2 else 1
                     ret += "[胜利，+${add_score}分"
+                    PluginMain.addWin(player.number, i == bossIndex)
 
                     //如果还有牌，就公开手牌
                     if (player.card.size > 0) {
@@ -99,12 +102,7 @@ class Desk(number: Long) {
                         ret += player.handCards()
                     }
                 }
-                assert(win_flag != null)
-                assert(add_score != 0L)
-                Admin.addScore(player.number, add_score)
-                if(win_flag != null) {
-                    if(win_flag) Admin.addWin(player.number) else Admin.addLose(player.number)
-                }
+                PluginMain.addScore(player.number, add_score)
             } else {
                 ret += "：${player.card.size}张手牌"
                 if (listHandCards) {
@@ -748,37 +746,29 @@ class Desk(number: Long) {
         this.msg += "本局积分：${this.basic*this.multiple}"
     }
 
-    fun getPlayerInfo(playNum: Long): String {
-        var ret = ""
-        ret += this.at(playNum);
-        ret += "：";
-        //this.breakLine();
-        ret += "${Admin.readWin(playNum)}胜${Admin.readLose(playNum)}负，"
-        ret += "积分${this.readScore(playNum)}。\n"
-        return ret
+    //私人查询信息
+    fun getPlayerInfo(playerId: Long): String {
+        val player = PluginMain.getPlayerInfo(playerId)
+        return """
+            ${this.at(playerId)}
+            ${player.wins}胜，${player.loses}负，积分${player.score}""".trimIndent()
     }
 
-    fun getScore(playNum: Long) {
-        this.msg += this.at(playNum)
-        this.breakLine()
-        if (Admin.getScore(playNum)) {
-            this.msg += "这是今天的200点积分，祝你玩♂得开心！\n";
-            this.msg += "你现在的积分总额为${Admin.readScore(playNum)}，"
+    fun detailedInfo(playerId: Long) {
+        val player = PluginMain.getPlayerInfo(playerId)
+        fun winning_rate(win: Long, lose: Long): String {
+            if(win + lose == 0L) {
+                return "0%"
+            }
+            return "${(win * 100) / (win + lose)}%"
         }
-        else {
-            this.msg += "你今日已经领取过积分！\n";
-        }
-        this.msg += "获取更多积分请明天再来或是和管理员";
-        this.msg += this.at(Admin.readAdmin());
-        this.msg += "进行py交易！\n";
-    }
-
-    fun readScore(playNum: Long): Long {
-        return Admin.readScore(playNum) - 500000000L
-    }
-
-    fun readSendScore(playNum: Long) {
-        this.msg += (Admin.readScore(playNum) - 500000000).toString()
+        this.msg += """
+            ${this.at(playerId)}
+            积分${player.score}
+            ${player.wins}胜，${player.loses}负，胜率${winning_rate(player.wins, player.loses)}
+            农民时${player.farmer_wins}胜，${player.farmer_loses}负，胜率${winning_rate(player.farmer_wins, player.farmer_loses)}
+            地主时${player.landlord_wins}胜，${player.landlord_loses}负，胜率${winning_rate(player.landlord_wins, player.landlord_loses)}
+            """.trimIndent()
     }
 
     fun setNextPlayerIndex() {
@@ -857,20 +847,6 @@ class Desk(number: Long) {
         this.breakLine();
         this.msg += "加入成功，已有玩家${this.players.size}人，分别是：\n"
         this.msg += this.playersInfo()
-
-        if (Admin.readScore(playNum) <= 0) {
-            this.msg += Util.crossline()
-            this.breakLine();
-            this.msg += this.at(playNum);
-            this.breakLine();
-            this.msg += "你的积分为";
-            this.readSendScore(playNum);
-            this.msg += "，"; //在这里van游戏可能太♂弱而受到挫折！";
-            //this->breakLine();
-            this.msg += "请多多练♂习以提高你的牌技，祝你弯道超车！"
-            this.breakLine();
-        }
-
 
         if (this.players.size == 3) {
             this.breakLine();
@@ -1032,15 +1008,11 @@ class Desk(number: Long) {
             //启动挂机检测程序
             // this.counter = new thread(&Desk::checkAFK, this);
 
-            var maxScore = players.maxOf { Admin.readScore(it.number) }
-            var minScore = players.minOf { Admin.readScore(it.number) }
+            var maxScore = players.maxOf { PluginMain.readScore(it.number) }
+            var minScore = players.minOf { PluginMain.readScore(it.number) }
 
-            //暂定：最大最低分每差50分标准分加3。
-            for (player in players) {
-                Admin.addScore(player.number, CONFIG_PLAY_BONUS);
-            }
-
-            this.basic = min(CONFIG_TOP_SCORE, (CONFIG_BOTTOM_SCORE * (maxScore - minScore)) / 50L)
+            // this.basic = min(CONFIG_TOP_SCORE, (CONFIG_BOTTOM_SCORE * (maxScore - minScore)) / 50L)
+            // this.basic = 0
 
             this.msg += "游戏开始，桌号：${this.number}。\n"
             this.msg += "游戏挂机检测时间：" +

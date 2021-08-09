@@ -67,10 +67,10 @@ object Casino {
         }/*
         else if (msg == L"记牌器") {
                 desk.msg << L"记牌器没做(好)呢！估计有生之年可以做好！";
-        }
-        else if (msg == L"我的信息") {
-                desk.getPlayerInfo(playNum);
         } */
+        else if (msg == "我的信息") {
+            desk.detailedInfo(playNum)
+        }
         else if (msg.startsWith("加入观战") || msg.startsWith("观战")) {
             if(desk.joinWatching(playNum)) {
                 desk.sendWatchingMsg_Join(playNum)

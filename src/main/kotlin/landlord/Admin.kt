@@ -85,104 +85,6 @@ object Admin {
         return WritePrivateProfileString("admin", "admin", playerNum.toString(), CONFIG_PATH);
     }
 
-    fun readScore(playerNum: Long): Long {
-        val model = "score";
-        //增加负分功能，最低值负5亿分，第三个参数是未找到时返回的默认值。
-        //负分直接输出有bug，所以输出需要使用desk中的readScore函数。
-        return GetPrivateProfileInt(model, playerNum.toString(), 500000000, CONFIG_PATH)
-    }
-
-    fun getScore(playerNum: Long): Boolean {
-        val lastGetScoreTime = GetPrivateProfileInt("time", playerNum.toString(), 0, CONFIG_PATH);
-        // TODO: 时间
-        /*
-        time_t rawtime;
-        int64_t now = time(&rawtime);
-
-        return if (now / (24 * 60 * 60) > lastGetScoreTime / (24 * 60 * 60)) {
-            addScore(playerNum, CONFIG_INIT_SCORE);
-            WritePrivateProfileString("time", playerNum.toString(), new.toString(), CONFIG_PATH);
-        } else {
-            false
-        }
-         */
-        return true
-    }
-
-    fun writeScore(playerNum: Long, score: Long): Boolean {
-        //更新数据库版本
-        writeVersion()
-        return WritePrivateProfileString("score", playerNum.toString(), score.toString(), CONFIG_PATH);
-    }
-
-    fun addScore(playerNum: Long, score: Long): Boolean {
-        var hasScore = readScore(playerNum); //这里使用desk里的函数
-        hasScore += score;
-        if (hasScore < 0) {
-            hasScore = 0;
-        }
-        else if (hasScore > 1000000000) {
-            hasScore = 1000000000;
-        }
-        return  writeScore(playerNum, hasScore)
-    }
-
-    fun readWin(playerNum: Long): Long {
-        return GetPrivateProfileInt("win", playerNum.toString(), 0, CONFIG_PATH)
-    }
-
-    fun readLose(playerNum: Long): Long {
-        return GetPrivateProfileInt("lose", playerNum.toString(), 0, CONFIG_PATH)
-    }
-
-    fun writeWin(playerNum: Long, win: Long): Boolean {
-        return WritePrivateProfileString("win", playerNum.toString(), win.toString(), CONFIG_PATH)
-    }
-
-    fun writeLose(playerNum: Long, lose: Long): Boolean {
-        return WritePrivateProfileString("lose", playerNum.toString(), lose.toString(), CONFIG_PATH)
-    }
-
-    fun addWin(playerNum: Long): Boolean {
-        return writeWin(playerNum, readWin(playerNum) + 1)
-    }
-
-    fun addLose(playerNum: Long): Boolean {
-        return writeLose(playerNum, readLose(playerNum) + 1)
-    }
-
-    fun readDataType(): String {
-        return if(GetPrivateProfileInt("type", "isofficial", 0, CONFIG_PATH) != 0L) "正式数据" else "测试数据"
-    }
-
-    fun writeDataType(): Boolean {
-        val value = 1 - GetPrivateProfileInt("type", "isofficial", 0, CONFIG_PATH)
-        return WritePrivateProfileString("type", "isofficial", value.toString(), CONFIG_PATH)
-    }
-
-    fun readVersion(): Long {
-        return GetPrivateProfileInt("version", "version", 0, CONFIG_PATH);
-    }
-
-    fun writeVersion(): Boolean {
-        // TODO: 将时间作为版本写入
-        /*
-        wstringstream ss;
-        ss.str(L"");
-
-
-        time_t rawtime = time(0);
-        char tmp[64] = "";
-        struct tm now_time;
-        localtime_s(&now_time, &rawtime);
-        Util::strcat_tm(tmp, sizeof(tmp), now_time);
-
-        ss << tmp;
-        wstring value = ss.str();
-        ss.str(L"");
-         */
-        return WritePrivateProfileString("version", "version", "Alpha", CONFIG_PATH);
-    }
 
     fun IAmAdmin(playerNum: Long): Boolean {
         return readAdmin() == 0L && writeAdmin(playerNum)
@@ -192,16 +94,6 @@ object Admin {
         return false
         // TODO: allow reset the game
         // return playNum == readAdmin() && DeleteFile(CONFIG_PATH)
-    }
-
-    //私人查询信息
-    fun getPlayerInfo(playNum: Long) {
-        var msg = """[CQ:at,qq=${playNum }]：\n
-                ${readWin(playNum)}胜
-                ${readLose(playNum)}负，
-            积分${(readScore(playNum) - 500000000L)}""".trimIndent()
-
-        suspend { Util.sendPrivateMsg(playNum, msg) }
     }
 
     fun backupData(playNum: Long): Boolean {

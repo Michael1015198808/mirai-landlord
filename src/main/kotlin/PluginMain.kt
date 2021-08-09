@@ -1,10 +1,12 @@
 package michael.landlord
 
+import michael.landlord.landlord.PlayerInfo
 import michael.landlord.main.*
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSenderOnMessage
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
+import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
@@ -76,16 +78,59 @@ object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.landlord",
         name = "mirai斗地主插件",
-        version = "0.2.11"
+        version = "0.3.0"
     ) {
         author("鄢振宇https://github.com/michael1015198808")
         info("mirai的斗地主插件")
     }
 ) {
+    val playerInfoCache: MutableMap<Long, PlayerInfo> = mutableMapOf()
+    object globalStatisticsData: AutoSavePluginData("global") {
+        var landlord_wins: Long by value()
+        var landlord_loses: Long by value()
+    }
+    fun getPlayerInfo(playerId: Long): PlayerInfo {
+        if (! playerInfoCache.contains(playerId)) {
+            val info = PlayerInfo(playerId)
+            info.reload()
+            playerInfoCache[playerId] = info
+        }
+        return playerInfoCache.getValue(playerId)
+    }
+    fun readScore(playerId: Long): Long {
+        return getPlayerInfo(playerId).score
+    }
+    fun readWin(playerId: Long): Long {
+        return getPlayerInfo(playerId).wins
+    }
+    fun readLose(playerId: Long): Long {
+        return getPlayerInfo(playerId).loses
+    }
+
+    fun addScore(playerId: Long, score: Long) {
+        var oldScore = readScore(playerId); //这里使用desk里的函数
+        getPlayerInfo(playerId).score = Math.max(-500000000L, Math.min(oldScore + score, 500000000L))
+    }
+    fun addWin(playerId: Long, isBoss: Boolean) {
+        ++getPlayerInfo(playerId).wins
+        if(isBoss)
+            ++getPlayerInfo(playerId).landlord_wins
+        else
+            ++getPlayerInfo(playerId).farmer_wins
+    }
+
+    fun addLose(playerId: Long, isBoss: Boolean) {
+        ++getPlayerInfo(playerId).loses
+        if(isBoss)
+            ++getPlayerInfo(playerId).landlord_loses
+        else
+            ++getPlayerInfo(playerId).farmer_loses
+    }
     override fun onEnable() {
         logger.info { "Plugin loaded" }
         LandlordConfig.reload()
         taskManageCommand.register()
+        globalStatisticsData.reload()
         //配置文件目录 "${dataFolder.absolutePath}/"
         val eventChannel = GlobalEventChannel.parentScope(this)
         eventChannel.subscribeAlways<GroupMessageEvent>{
