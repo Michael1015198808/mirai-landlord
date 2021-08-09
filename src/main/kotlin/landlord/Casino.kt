@@ -1,5 +1,8 @@
 package michael.landlord.main
 
+import michael.landlord.PluginMain
+import michael.landlord.PluginMain.globalStatisticsData
+
 object Casino {
     val desks: MutableList<Desk> = mutableListOf()
     fun getDesk(deskNum: Long): Int {
@@ -25,8 +28,6 @@ object Casino {
         if (playNum == 80000000L) {
             desk.msg += "匿名用户不能参加斗地主！"
             return false
-        } else if (msg.startsWith("斗地主命令") || msg.startsWith("斗地主指令") || msg.startsWith("斗地主操作")) {
-            desk.commandList();
         } else if (msg.startsWith("上桌") || msg.startsWith("上座")  || msg.startsWith("上机") || msg.startsWith("打牌")) {
             desk.join(playNum);
         } else if ((desk.state >= STATE_READYTOGO) &&
@@ -68,7 +69,15 @@ object Casino {
         else if (msg == L"记牌器") {
                 desk.msg << L"记牌器没做(好)呢！估计有生之年可以做好！";
         } */
-        else if (msg == "我的信息") {
+        else if (Regex("统计(信息|数据|战绩)").matches(msg)) {
+            desk.msg += """
+                共进行游戏${globalStatisticsData.landlord_wins+globalStatisticsData.landlord_loses}场
+                地主方获胜${globalStatisticsData.landlord_wins}
+                农民方获胜${globalStatisticsData.landlord_loses}
+                地主方胜率${(globalStatisticsData.landlord_wins * 100) / (globalStatisticsData.landlord_wins+globalStatisticsData.landlord_loses)}%
+            """.trimIndent()
+        }
+        else if (Regex("我的(信息|数据|战绩)").matches(msg)) {
             desk.detailedInfo(playNum)
         }
         else if (msg.startsWith("加入观战") || msg.startsWith("观战")) {

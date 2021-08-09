@@ -50,7 +50,7 @@ object taskManageCommand : CompositeCommand(
         LandlordConfig.remove(fromEvent.group.id)
         fromEvent.group.sendMessage("本群${fromEvent.group.id}已关闭斗地主功能！")
     }
-    @SubCommand("信息", "info")
+    @SubCommand("信息", "info", "版本", "version")
     @Description("显示该项目信息")
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.info() {
         fromEvent.group.sendMessage("""
@@ -65,12 +65,33 @@ object taskManageCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.rules() {
         fromEvent.group.sendMessage("""
             斗地主规则：
-            打牌一次奖励${CONFIG_PLAY_BONUS}分。
             中途退出（弃牌）、挂机（抢地主、加倍${CONFIG_TIME_BOSS}秒，出牌${CONFIG_TIME_GAME}秒）倒扣${CONFIG_SURRENDER_PENALTY}分。
-            每局游戏的标准分计算方法为：初始值${CONFIG_INIT_SCORE}分，最高最低分玩家的积分差额每有50分，
-            标准分加${CONFIG_BOTTOM_SCORE }分，但标准分不会超过${CONFIG_TOP_SCORE}分。
+            每局游戏的标准分为${CONFIG_INIT_SCORE}分。
             分数下限为负5亿，上限为正5亿。
     """.trimIndent())
+    }
+    @SubCommand("命令", "指令", "操作")
+    @Description("显示斗地主指令")
+    suspend fun CommandSenderOnMessage<GroupMessageEvent>.commands() {
+        fromEvent.group.sendMessage("""
+            斗地主命令列表（*号表示支持后带符号）：
+            /斗地主 版本：查看游戏版本号、GitHub链接与原作者信息
+            上桌|打牌：加入游戏
+            出|打 或直接出牌：出牌 比如 "出23456"、"334455"
+            过(牌)|不要|pass：过牌
+            抢(地主)|不抢：是否抢地主
+            加(倍)|不加(倍)：是否加倍
+            开始|启动|GO：是否开始游戏
+            下桌|不玩了：退出游戏，只能在准备环节使用
+            玩家列表：当前在游戏中得玩家信息
+            明牌：显示自己的牌给所有玩家，明牌会导致积分翻倍，只能在发完牌后以及出牌之前使用。
+            弃牌：放弃本局游戏，当地主或者两名农民弃牌游戏结束。农民玩家弃牌赢了不得分（有弃牌惩罚），输了双倍扣分
+            我的信息：查看我的战绩与积分信息
+            加入观战|观战：暗中观察
+            退出观战：光明正大地看打牌
+            重置斗地主：删除所有配置。重置后可重新设定管理员
+            强制结束：结束当前群的游戏，正式版将移除
+            """.trimIndent())
     }
 }
 
@@ -78,7 +99,7 @@ object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.landlord",
         name = "mirai斗地主插件",
-        version = "0.3.1"
+        version = "0.3.2"
     ) {
         author("鄢振宇https://github.com/michael1015198808")
         info("mirai的斗地主插件")
