@@ -77,20 +77,20 @@ class Desk(number: Long) {
 
             ret += at(player.number)
             if (hasWin) {
-                val farm_flag: Boolean = (whoIsWinner == 2) //如果是农民赢了
+                val landlord_flag: Boolean = (whoIsWinner == 1) //如果是农民赢了
                 var add_score: Long
                 var win_flag: Boolean? = null
                 if (player.isSurrender) {
                     add_score = -CONFIG_SURRENDER_PENALTY
                     ret += "[投降，${add_score}分]"
-                } else if ((i == bossIndex).xor(farm_flag)) {
-                    add_score = if(farm_flag) -score else -halfScore
+                } else if ((i == bossIndex).xor(landlord_flag)) {
+                    add_score = if(landlord_flag) -score else -halfScore
                     ret += "[失败，${add_score}分]"
 
                     ret += "\n剩余手牌："
                     ret += player.handCards()
                 } else {
-                    add_score = if(farm_flag) halfScore else score
+                    add_score = if(landlord_flag) halfScore else score
                     ret += "[胜利，+${add_score}分"
 
                     //如果还有牌，就公开手牌
