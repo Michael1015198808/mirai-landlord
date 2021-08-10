@@ -6,7 +6,7 @@ import kotlin.random.Random
 class Desk(number: Long) {
     var turn: Int = 0
     var multiple: Long = 1 // 分数倍率
-    var basic: Long = CONFIG_INIT_SCORE
+    val basic: Long = CONFIG_INIT_SCORE
     var lastTime: Long = 0
     var number: Long = number // 桌号？
     var cards: MutableList<String> = cardDest.toMutableList()
@@ -68,51 +68,61 @@ class Desk(number: Long) {
             ret += "本局积分：${score}\n"
             ret += "出牌次数：$turn\n"
         }
-        val landlord_flag: Boolean = (whoIsWinner == 1) //如果是地主赢了
         if(hasWin) {
+            val landlord_flag: Boolean = (whoIsWinner == 1) //如果是地主赢了
+            val scores = players.map { PluginMain.readScore(it.number) }
+            val average_score =  scores.sum() / 3
+            val factors = scores.map { ((it - average_score) / 100).coerceIn(-20, 20) }.toMutableList()
+            factors[bossIndex] = 0
+            factors[bossIndex] = 100 - factors.sum()
+
             if(landlord_flag) ++PluginMain.globalStatisticsData.landlord_wins
             else ++PluginMain.globalStatisticsData.landlord_loses
-        }
-        for((i, player) in players.withIndex()) {
-            ret += "${i+1}号玩家："
-            if (state >= STATE_READYTOGO) {
-                ret += "[${if(i == bossIndex) "地主" else "农民"}]"
-            }
 
-            ret += at(player.number)
-            if (hasWin) {
+            fun calScore(original: Long, factor: Long): Long {
+                return (original * (100 + factor)) / 100
+            }
+            for((i, player) in players.withIndex()) {
+                ret += "${i + 1}号玩家"
+                ret += at(player.number)
+                if (state >= STATE_READYTOGO) {
+                    ret += "[${if (i == bossIndex) "地主" else "农民"}]："
+                }
                 var add_score: Long
                 if (player.isSurrender) {
-                    add_score = -CONFIG_SURRENDER_PENALTY * multiple
-                    ret += "[投降，${add_score}分]"
+                    add_score = -calScore(CONFIG_SURRENDER_PENALTY * multiple, factors[i])
+                    ret += "[投降，${add_score}分${100 + factors[i]}%]"
                     PluginMain.addLose(player.number, i == bossIndex)
                 } else if ((i == bossIndex).xor(landlord_flag)) {
-                    add_score = -score * if(i == bossIndex) 2 else 1
-                    ret += "[失败，${add_score}分]"
+                    add_score = -calScore(score, factors[i])
+                    ret += "[失败，${add_score}分${100 + factors[i]}%]"
                     PluginMain.addLose(player.number, i == bossIndex)
-
+                } else {
+                    add_score = calScore(score, factors[i])
+                    ret += "[胜利，+${add_score}分（${100 + factors[i]}%）]"
+                    PluginMain.addWin(player.number, i == bossIndex)
+                }
+                //如果还有牌，就公开手牌
+                if (player.card.size > 0) {
                     ret += "\n剩余手牌："
                     ret += player.handCards()
-                } else {
-                    add_score = score * if(i == bossIndex) 2 else 1
-                    ret += "[胜利，+${add_score}分"
-                    PluginMain.addWin(player.number, i == bossIndex)
-
-                    //如果还有牌，就公开手牌
-                    if (player.card.size > 0) {
-                        ret += "\n剩余手牌："
-                        ret += player.handCards()
-                    }
                 }
                 PluginMain.addScore(player.number, add_score)
-            } else {
+            }
+        } else {
+            for((i, player) in players.withIndex()) {
+                ret += "${i+1}号玩家"
+                ret += at(player.number)
+                if (state >= STATE_READYTOGO) {
+                    ret += "[${if(i == bossIndex) "地主" else "农民"}]"
+                }
                 ret += "：${player.card.size}张手牌"
                 if (listHandCards) {
                     ret += player.handCards()
                 }
             }
-            ret += "\n"
         }
+
         return ret.joinToString("")
     }
 
@@ -181,11 +191,11 @@ class Desk(number: Long) {
         if (cardCount == 8 && max_count == 4 && min_count == 2) {
             return Pair("4带2对", Util.findFlag(cards[counts.indexOf(4)]))
         }
-        if (cardGroupCount * max_count > 4 && max_count == min_count
+        if (cardGroupCount * max_count > 4 && max_count == min_count && max_count < 4 // 不允许 33334444
             && Util.findFlag(cards[cardGroupCount - 1]) - Util.findFlag(cards[0]) + 1 == cardGroupCount
             && Util.findFlag(cards[cardGroupCount - 1]) < 12
         ) { //顺子
-            val model = if(max_count == 1) "顺子" else "${max_count}连顺"
+            val model = listOf("顺子", "连对", "飞机")[max_count]
             return Pair(model, Util.findFlag(cards[0]))
         }
 
@@ -194,12 +204,12 @@ class Desk(number: Long) {
             val len = list.size / 4
             val lastTrip = counts.lastIndexOf(3)
             val firstTrip = counts.indexOf(3)
-            if(counts.subList(lastTrip - len + 1, lastTrip + 1).all { it == 3 } &&
+            if(counts.subList(lastTrip - len + 1, lastTrip + 1).all { it >= 3 } &&
                 Util.findFlag(cards[lastTrip]) - Util.findFlag(cards[lastTrip - len + 1]) + 1 == len) {
                 // 飞机的主体必然包含三张的牌中最大的或最小的 // 都是三张且连续
                 return Pair("飞机带${len}翅膀", Util.findFlag(cards[lastTrip - len + 1]))
             }
-            if(counts.subList(firstTrip, firstTrip + len).all { it == 3 } &&
+            if(counts.subList(firstTrip, firstTrip + len).all { it >= 3 } &&
                 Util.findFlag(cards[firstTrip + len - 1]) - Util.findFlag(cards[firstTrip]) + 1 == len) {
                 return Pair("飞机带${len}翅膀", Util.findFlag(cards[firstTrip]))
             }
@@ -209,11 +219,11 @@ class Desk(number: Long) {
             val len = list.size / 5
             val lastTrip = counts.lastIndexOf(3)
             val firstTrip = counts.indexOf(3)
-            if(counts.subList(lastTrip - len + 1, lastTrip + 1).all { it == 3 } &&
+            if(counts.subList(lastTrip - len + 1, lastTrip + 1).all { it >= 3 } &&
                 Util.findFlag(cards[lastTrip]) - Util.findFlag(cards[lastTrip - len + 1]) + 1 == len) {
                 return Pair("飞机带${len}翅膀", Util.findFlag(cards[lastTrip - len + 1]))
             }
-            if(counts.subList(firstTrip, firstTrip + len).all { it == 3 } &&
+            if(counts.subList(firstTrip, firstTrip + len).all { it >= 3 } &&
                 Util.findFlag(cards[firstTrip + len - 1]) - Util.findFlag(cards[firstTrip]) + 1 == len) {
                 return Pair("飞机带${len}翅膀", Util.findFlag(cards[firstTrip]))
             }
@@ -954,9 +964,6 @@ class Desk(number: Long) {
 
             //启动挂机检测程序
             // this.counter = new thread(&Desk::checkAFK, this);
-
-            var maxScore = players.maxOf { PluginMain.readScore(it.number) }
-            var minScore = players.minOf { PluginMain.readScore(it.number) }
 
             // this.basic = min(CONFIG_TOP_SCORE, (CONFIG_BOTTOM_SCORE * (maxScore - minScore)) / 50L)
             // this.basic = 0

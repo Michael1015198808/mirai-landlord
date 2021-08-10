@@ -24,11 +24,11 @@ const val STATE_OVER        = 6
 const val CONFIG_PATH = "./app/com.auntspecial.doudizhu/config.ini"
 const val CONFIG_DIR = "./app/com.auntspecial.doudizhu/"
 
-const val CONFIG_INIT_SCORE         = 150L
+const val CONFIG_INIT_SCORE         = 200L
 const val CONFIG_BOTTOM_SCORE       = 3L
 const val CONFIG_TOP_SCORE          = 1000L
 const val CONFIG_PLAY_BONUS         = 0L
-const val CONFIG_SURRENDER_PENALTY  = 150L
+const val CONFIG_SURRENDER_PENALTY  = 300L
 const val CONFIG_TIME_BOSS          = 30
 const val CONFIG_TIME_MULTIPLE      = 30
 const val CONFIG_TIME_GAME          = 60
