@@ -7,6 +7,7 @@ class Player(playerNum: Long) {
     var isReady: Boolean = false
     var isOpenCard: Boolean = false
     var isSurrender: Boolean = false
+    var hasMultiplied: Boolean = false
     suspend fun sendMsg() {
         if (msg != "") {
             Util.sendPrivateMsg(number, msg.trim())

@@ -22,7 +22,7 @@ class Desk(number: Long) {
     var currentPlayIndex: Int = -1//该谁出牌
     // TODO: 改名为landlord
     var bossIndex: Int = -1//谁是地主
-    var bossHasMultipled: Boolean = false
+    var multipliedCount: Int = 0
     var isSecondCallForBoss: Boolean = false//第二次叫地主
     var warningSent: Boolean = false//倒计时警告消息已发送
 
@@ -269,7 +269,7 @@ class Desk(number: Long) {
         sendWatchingMsg_Start()
     }
 
-    fun getBoss(playerNum: Long) {
+    fun getLandlord(playerNum: Long) {
         val index = getPlayer(playerNum);
         if (state == STATE_BOSSING && currentPlayIndex == index) {
             //记录时间
@@ -361,103 +361,48 @@ class Desk(number: Long) {
         //防止bug
         warningSent = false;
 
-        msg += "抢地主环节结束，下面进入加倍环节。\n"
-        msg += Util.crossline()
-        msg += at(players[bossIndex].number)
-        breakLine()
-        msg += "你是否要加倍？\n"
-        msg += "请用[加]或[不(加)]来回答。\n"
+        msg += """
+            抢地主环节结束，下面进入加倍环节。
+            ${players.joinToString(" ") {this.at(it.number)}}
+            是否要加倍？
+            请用[加]或[不(加)]来回答。
+            """.trimIndent()
     }
-    fun getMultiple(playerNum: Long) {
+
+    fun setMultiple(playerNum: Long, confirmMultiple: Boolean) {
         val index = getPlayer(playerNum)
-        if (state == STATE_MULTIPLING && currentPlayIndex == index) {
-            multiple += 1;
-
-            //记录时间
-            // time_t rawtime;
-            // lastTime = time(&rawtime);
-            //防止提示后加倍出现bug
-            warningSent = false;
-
-            setNextPlayerIndex();
-
-            if (currentPlayIndex == bossIndex && bossHasMultipled) {
+        if (index != -1) {
+            val player = players[index]
+            if (! player.hasMultiplied) {
+                player.hasMultiplied = true
                 msg += at(players[index].number);
-                msg += "要加倍。\n"
-                msg += "本局积分：${basic*multiple}\n"
-                msg += Util.crossline()
+                if(confirmMultiple) {
+                    multiple += 1
+                    msg += "要加倍。\n"
+                    msg += "本局积分：${basic * multiple}\n"
+                } else {
+                    msg += "不加倍。\n"
+                }
+                multipliedCount += 1
 
-                state = STATE_READYTOGO;
+                //记录时间
+                // time_t rawtime;
+                // lastTime = time(&rawtime);
+                //防止提示后加倍出现bug
+                warningSent = false;
 
-                msg += "加倍环节结束，斗地主正式开始。\n"
-                msg += Util.crossline()
-                //msg << L"第" << turn + 1 << L"回合：剩余手牌数：";
-                //breakLine();
 
-                msg += listPlayers(1)
-
-                msg += "请地主";
-                msg += at(players[bossIndex].number)
-                msg += "先出牌。\n"
-                //战况播报
-                sendWatchingMsg_Start()
-            }
-            else {
-                bossHasMultipled = true
-
-                msg += at(players[index].number)
-                msg += "要加倍。\n"
-                msg += "本局积分：${basic*multiple}\n"
-                this.msg += Util.crossline()
-                msg += this.at(players[currentPlayIndex].number);
-                this.msg += "你是否要加倍？\n"
-                this.msg += "请用[加]或[不(加)]来回答。\n"
-            }
-        }
-    }
-
-    fun dontMultiple(playerNum: Long) {
-        val index: Int = getPlayer(playerNum);
-        if (this.state == STATE_MULTIPLING && this.currentPlayIndex == index) {
-            this.setNextPlayerIndex();
-
-            //记录时间
-            // time_t rawtime;
-            // this.lastTime = time(&rawtime);
-            //防止提示后不加倍出现bug
-            this.warningSent = false;
-
-            if (this.currentPlayIndex == this.bossIndex && bossHasMultipled) {
-                msg += this.at(this.players[index].number);
-                this.msg += "不要加倍。\n"
-                this.msg += Util.crossline()
-
-                this.state = STATE_READYTOGO
-
-                this.msg += "加倍环节结束，斗地主正式开始。\n"
-                this.msg += Util.crossline()
-                //this.msg << L"第" << this.turn + 1 << L"回合：";
-                //this.breakLine();
-                this.msg += "本局积分：${this.basic*this.multiple}\n"
-                this.msg += "剩余手牌数：\n"
-                msg += this.listPlayers(1)
-                this.breakLine();
-                this.msg += "请地主"
-                msg += this.at(players[this.bossIndex].number)
-                this.msg += "先出牌。\n"
-                //战况播报
-                this.sendWatchingMsg_Start();
-            }
-            else {
-                bossHasMultipled = true;
-
-                msg += at(players[index].number)
-                msg += "不要加倍。\n"
-                msg += Util.crossline()
-                msg += at(players[currentPlayIndex].number);
-                breakLine();
-                msg += "你是否要加倍？\n"
-                msg += "请用[加]或[不(加)]来回答。\n"
+                if (multipliedCount == 3) {
+                    state = STATE_READYTOGO;
+                    msg += """
+                        加倍环节结束，${multiple - 1}人加倍。斗地主正式开始。\n"
+                        ${Util.crossline()}
+                        ${listPlayers(1)}
+                        请地主${at(players[bossIndex].number)}先出牌
+                        """.trimIndent()
+                    //战况播报
+                    sendWatchingMsg_Start()
+                }
             }
         }
     }

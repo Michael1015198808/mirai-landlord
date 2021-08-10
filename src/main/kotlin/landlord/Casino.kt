@@ -53,13 +53,13 @@ object Casino {
                 desk.msg += "非玩家不能开始游戏！"
             }
         } else if ((msg.startsWith("抢") || msg.startsWith("要")) && desk.state == STATE_BOSSING) {
-            desk.getBoss(playNum);
+            desk.getLandlord(playNum);
         } else if (msg.startsWith("不") && desk.state == STATE_BOSSING) {
             desk.dontBoss(playNum);
         } else if (msg.startsWith("加") && desk.state == STATE_MULTIPLING) {
-            desk.getMultiple(playNum)
+            desk.setMultiple(playNum, true)
         } else if (msg.startsWith("不") && desk.state == STATE_MULTIPLING) {
-            desk.dontMultiple(playNum);
+            desk.setMultiple(playNum, false)
         } else if (msg.startsWith("明牌")) {
             desk.openCard(playNum);
         } else if ((msg.startsWith("弃牌"))
