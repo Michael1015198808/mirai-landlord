@@ -395,7 +395,7 @@ class Desk(number: Long) {
                 if (multipliedCount == 3) {
                     state = STATE_READYTOGO;
                     msg += """
-                        加倍环节结束，${multiple - 1}人加倍。斗地主正式开始。\n"
+                        加倍环节结束，${multiple - 1}人加倍。斗地主正式开始。
                         ${Util.crossline()}
                         ${listPlayers(1)}
                         请地主${at(players[bossIndex].number)}先出牌
