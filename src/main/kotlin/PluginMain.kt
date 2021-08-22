@@ -99,7 +99,7 @@ object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.landlord",
         name = "mirai斗地主插件",
-        version = "0.3.4"
+        version = "0.3.5"
     ) {
         author("鄢振宇https://github.com/michael1015198808")
         info("mirai的斗地主插件")
@@ -155,9 +155,98 @@ object PluginMain : KotlinPlugin(
         //配置文件目录 "${dataFolder.absolutePath}/"
         val eventChannel = GlobalEventChannel.parentScope(this)
         eventChannel.subscribeAlways<GroupMessageEvent>{
-            if(LandlordConfig.contains(group.id)) {
-                michael.landlord.main.bot = bot
-                Casino.game(true, group.id, sender.id, message.contentToString())
+            if(LandlordConfig.contains(group.id) && message[0] is PlainText) {
+                val groupId = group.id
+                val playerId = sender.id
+                var msg = message.toString().trim().uppercase()
+
+                var desk = Casino.getOrCreatDesk(groupId);
+
+                if (playerId == 80000000L) {
+                    desk.msg += "匿名用户不能参加斗地主！"
+                } else if (msg.startsWith("上桌") || msg.startsWith("上座")  || msg.startsWith("上机") || msg.startsWith("打牌")) {
+                    desk.join(playerId);
+                } else if ((desk.state >= STATE_READYTOGO) &&
+                    (msg.startsWith("过") || msg.startsWith("不出") ||
+                        msg.startsWith("没有") || msg.startsWith("打不出") || msg.startsWith("要不起") ||
+                        msg.startsWith("不要") || msg.startsWith("PASS") )) {//跳过出牌阶段
+                    desk.discard(playerId);
+                } else if ((desk.state >= STATE_READYTOGO) &&
+                    (msg.startsWith("出") || msg.startsWith("打") || Regex("([3456789JQKA2]|10|小王|大王|王炸)+").matches(msg))) {//出牌阶段
+                    if(msg.startsWith("出") || msg.startsWith("打")) {
+                        msg = msg.substring(1)
+                    }
+                    desk.play(playerId, msg)
+                } else if (msg.startsWith("退桌") || msg.startsWith("下桌")
+                    || msg.startsWith("不玩了"))  {//结束游戏
+                    desk.exit(playerId);
+                } else if (msg == "玩家列表") {
+                    desk.listPlayers(1);
+                } else if (msg.startsWith("GO") || msg.startsWith("启动")) {
+                    if(desk.getPlayer(playerId) != -1) {
+                        desk.startGame();
+                    } else {
+                        desk.msg += "非玩家不能开始游戏！"
+                    }
+                } else if ((msg.startsWith("抢") || msg.startsWith("要")) && desk.state == STATE_BOSSING) {
+                    desk.getLandlord(playerId);
+                } else if (msg.startsWith("不") && desk.state == STATE_BOSSING) {
+                    desk.dontBoss(playerId);
+                } else if (msg.startsWith("加") && desk.state == STATE_MULTIPLING) {
+                    desk.setMultiple(playerId, true)
+                } else if (msg.startsWith("不") && desk.state == STATE_MULTIPLING) {
+                    desk.setMultiple(playerId, false)
+                } else if (msg.startsWith("明牌")) {
+                    desk.openCard(playerId);
+                } else if ((msg.startsWith("弃牌"))
+                    && desk.state >= STATE_BOSSING) {
+                    desk.surrender(playerId);
+                }/*
+                else if (msg == L"记牌器") {
+                    desk.msg << L"记牌器没做(好)呢！估计有生之年可以做好！";
+                } */
+                else if (Regex("统计(信息|数据|战绩)").matches(msg)) {
+                    desk.msg += """
+                    共进行游戏${globalStatisticsData.landlord_wins+globalStatisticsData.landlord_loses}场
+                    地主方获胜${globalStatisticsData.landlord_wins}
+                    农民方获胜${globalStatisticsData.landlord_loses}
+                    地主方胜率${(globalStatisticsData.landlord_wins * 100) / (globalStatisticsData.landlord_wins+globalStatisticsData.landlord_loses)}%
+                    """.trimIndent()
+                }
+                else if (Regex("我的(信息|数据|战绩)").matches(msg)) {
+                    desk.detailedInfo(playerId)
+                }
+                else if (msg.startsWith("加入观战") || msg.startsWith("观战")) {
+                    if(desk.joinWatching(playerId)) {
+                        desk.sendWatchingMsg_Join(playerId)
+                    }
+                } else if (msg.startsWith("退出观战")) {
+                    desk.exitWatching(playerId)
+                } /*
+        //else if (msg.find(L"举报") == 0 || msg.find(L"挂机") == 0 || msg.find(L"AFK") == 0) {
+        //	desk->AFKHandle(playNum);
+        //} */
+                else if (msg == "强制结束") {
+                    if (true || Admin.isAdmin(playerId)) {
+                        desk.msg += "管理员强制结束本桌游戏。\n"
+                        Casino.gameOver(groupId)
+                        Casino.desks.remove(desk)
+                    } else {
+                        desk.msg += "你根本不是管理员！"
+                        desk.breakLine()
+                    }
+                } else {
+                    // desk.msg += "命令解析失败！\n"
+                    // desk.msg += "输入\"强制结束\"以退出斗地主模式"
+                    return false
+                }
+
+                if (desk.msg.trim() != "") {
+                    group.sendMessage(desk.msg.trim())
+                    desk.msg = ""
+                }
+                desk.sendPlayerMsg()
+                desk.sendWatcherMsg()
             }
             return@subscribeAlways
         }
