@@ -69,6 +69,10 @@ object taskManageCommand : CompositeCommand(
             斗地主规则：
             中途退出（弃牌）、挂机（抢地主、加倍${CONFIG_TIME_BOSS}秒，出牌${CONFIG_TIME_GAME}秒）倒扣${CONFIG_SURRENDER_PENALTY}分。
             每局游戏的标准分为${CONFIG_INIT_SCORE}分。
+            每一局游戏会计算三名玩家积分的平均分。
+            农民积分每比平均分低100，失败时分数少扣1%，胜利时分数多加1%。
+            农民积分每比平均分高100，失败时分数多扣1%，胜利时分数少加1%。
+            上限为原本的120%，下限为原本的80%。
             分数下限为负5亿，上限为正5亿。
             """.trimIndent())
     }
@@ -101,7 +105,7 @@ object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.landlord",
         name = "mirai斗地主插件",
-        version = "0.3.6"
+        version = "0.4.0"
     ) {
         author("鄢振宇https://github.com/michael1015198808")
         info("mirai的斗地主插件")
@@ -158,6 +162,7 @@ object PluginMain : KotlinPlugin(
         val eventChannel = GlobalEventChannel.parentScope(this)
         eventChannel.subscribeAlways<GroupMessageEvent>{
             if(LandlordConfig.contains(group.id) && message[1] is PlainText) {
+                michael.landlord.main.bot = bot
                 val groupId = group.id
                 val playerId = sender.id
                 var msg = message[1].toString().trim().uppercase()
