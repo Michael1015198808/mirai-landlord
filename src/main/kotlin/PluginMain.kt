@@ -15,6 +15,7 @@ import net.mamoe.mirai.console.plugin.version
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.NewFriendRequestEvent
+import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.info
 
@@ -243,7 +244,7 @@ object PluginMain : KotlinPlugin(
                 }
 
                 if (desk.msg.trim() != "") {
-                    group.sendMessage(desk.msg.trim())
+                    group.sendMessage(desk.msg.trim().deserializeMiraiCode())
                     desk.msg = ""
                 }
                 desk.sendPlayerMsg()
