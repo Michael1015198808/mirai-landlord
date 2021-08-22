@@ -19,8 +19,6 @@ object Casino {
             return this.desks[deskIndex];
         }
     }
-    suspend fun game(subType: Boolean, group: Contact, playNum: Long, msgArray: String): Boolean {
-    }
 
     suspend fun game_manage(playNum: Long, raw_msg: String): Boolean {
         val msg = raw_msg.trim().uppercase()

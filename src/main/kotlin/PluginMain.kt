@@ -15,6 +15,7 @@ import net.mamoe.mirai.console.plugin.version
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.NewFriendRequestEvent
+import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.info
 
 object LandlordConfig : AutoSavePluginConfig("landlord") {
@@ -58,7 +59,7 @@ object taskManageCommand : CompositeCommand(
             源代码与更新履历：https://github.com/Michael1015198808/mirai-landlord
             移植自（基于酷Q的C++斗地主）：https://github.com/doowzs/CQDouDiZhu
             原作者与2.0.1源代码：https://github.com/lsjspl/CQDouDiZhu
-    """.trimIndent())
+            """.trimIndent())
     }
     @SubCommand("规则", "rules")
     @Description("显示斗地主规则")
@@ -68,7 +69,7 @@ object taskManageCommand : CompositeCommand(
             中途退出（弃牌）、挂机（抢地主、加倍${CONFIG_TIME_BOSS}秒，出牌${CONFIG_TIME_GAME}秒）倒扣${CONFIG_SURRENDER_PENALTY}分。
             每局游戏的标准分为${CONFIG_INIT_SCORE}分。
             分数下限为负5亿，上限为正5亿。
-    """.trimIndent())
+            """.trimIndent())
     }
     @SubCommand("命令", "指令", "操作")
     @Description("显示斗地主指令")
@@ -99,7 +100,7 @@ object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.landlord",
         name = "mirai斗地主插件",
-        version = "0.3.5"
+        version = "0.3.6"
     ) {
         author("鄢振宇https://github.com/michael1015198808")
         info("mirai的斗地主插件")
@@ -155,10 +156,10 @@ object PluginMain : KotlinPlugin(
         //配置文件目录 "${dataFolder.absolutePath}/"
         val eventChannel = GlobalEventChannel.parentScope(this)
         eventChannel.subscribeAlways<GroupMessageEvent>{
-            if(LandlordConfig.contains(group.id) && message[0] is PlainText) {
+            if(LandlordConfig.contains(group.id) && message[1] is PlainText) {
                 val groupId = group.id
                 val playerId = sender.id
-                var msg = message.toString().trim().uppercase()
+                var msg = message[1].toString().trim().uppercase()
 
                 var desk = Casino.getOrCreatDesk(groupId);
 
@@ -238,7 +239,7 @@ object PluginMain : KotlinPlugin(
                 } else {
                     // desk.msg += "命令解析失败！\n"
                     // desk.msg += "输入\"强制结束\"以退出斗地主模式"
-                    return false
+                    return@subscribeAlways
                 }
 
                 if (desk.msg.trim() != "") {

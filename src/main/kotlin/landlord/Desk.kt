@@ -51,10 +51,6 @@ class Desk(number: Long) {
     }
 
     fun listPlayers(type: Int): String {
-        val hasType: Boolean = type.and(1) > 0
-        if(hasType && state < STATE_READYTOGO) {
-            System.err.println("type=$type but state < STATE_GAMING")
-        }
         val hasWin: Boolean  = type.and(2) > 0
         val listHandCards: Boolean  = type.and(4) > 0
 
@@ -397,9 +393,9 @@ class Desk(number: Long) {
                     msg += """
                         加倍环节结束，${multiple - 1}人加倍。斗地主正式开始。
                         ${Util.crossline()}
-                        ${listPlayers(1)}
-                        请地主${at(players[bossIndex].number)}先出牌
-                        """.trimIndent()
+                        """.trimIndent() +
+                        listPlayers(1) +
+                        "请地主${at(players[bossIndex].number)}先出牌"
                     //战况播报
                     sendWatchingMsg_Start()
                 }
@@ -974,7 +970,7 @@ class Desk(number: Long) {
 
             this.shuffle()
             this.deal()
-            this.msg += this.listPlayers(1)
+            this.msg += this.listPlayers(0)
 
             this.createBoss();
         } else {
