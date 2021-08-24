@@ -80,7 +80,6 @@ object Casino {
         Casino.desks.removeAt(index)
         //更新数据库版本
         //Admin::writeVersion();
-        suspend { Util.sendGroupMsg(number, "游戏结束。") }
     }
     // void listDesks()
 }

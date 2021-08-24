@@ -18,6 +18,9 @@ import net.mamoe.mirai.event.events.NewFriendRequestEvent
 import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.info
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty
+import kotlin.reflect.full.declaredMembers
 
 object enableGroups : AutoSavePluginConfig("groups") {
     @ValueDescription("")
@@ -33,6 +36,14 @@ object enableGroups : AutoSavePluginConfig("groups") {
     fun remove(element: Long): Boolean {
         return groups.remove(element)
     }
+}
+
+object LandlordConfig : AutoSavePluginConfig("config") {
+    @ValueDescription(
+        "消息截断长度。当消息超过长度时按行进行截断。\n" +
+        "当机器人发送长消息被吞时启用。\n"
+    )
+    var length by value(1000)
 }
 
 object taskManageCommand : CompositeCommand(
@@ -99,13 +110,38 @@ object taskManageCommand : CompositeCommand(
             强制结束：结束当前群的游戏，正式版将移除
             """.trimIndent())
     }
+    private val members = LandlordConfig::class.declaredMembers
+    @SubCommand("设置", "set")
+    @Description("设置斗地主选项")
+    suspend fun CommandSenderOnMessage<GroupMessageEvent>.set(option: String, arg: Int) {
+        val field = members.find { it.name == option }
+        if (field != null) {
+            val mp = field as KMutableProperty1<LandlordConfig, Int>
+            mp.set(LandlordConfig, arg)
+            fromEvent.group.sendMessage("已将${option}设置为$arg！")
+        } else {
+            fromEvent.group.sendMessage("不存在属性$option！")
+        }
+    }
+    @SubCommand("当前设置", "settings")
+    @Description("打印斗地主设置")
+    suspend fun CommandSenderOnMessage<GroupMessageEvent>.settings() {
+        fromEvent.group.sendMessage(
+            members.joinToString("\n") { field ->
+                val mp = field as KProperty<Int>
+                """
+                ${field.name}：${mp.call(LandlordConfig)}
+                    ${field.annotations.filterIsInstance<ValueDescription>().joinToString { it.value }}
+                """.trimIndent()
+            })
+    }
 }
 
 object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.landlord",
         name = "mirai斗地主插件",
-        version = "0.4.1"
+        version = "0.4.2"
     ) {
         author("鄢振宇https://github.com/michael1015198808")
         info("mirai的斗地主插件")
@@ -249,7 +285,15 @@ object PluginMain : KotlinPlugin(
                 }
 
                 if (desk.msg.trim() != "") {
-                    group.sendMessage(desk.msg.trim().deserializeMiraiCode())
+                    val last = desk.msg.trim().split('\n').reduce {cumulation, line ->
+                        if (cumulation.length + line.length < LandlordConfig.length) {
+                            cumulation + "\n" + line
+                        } else {
+                            group.sendMessage(cumulation.deserializeMiraiCode())
+                            line
+                        }
+                    }
+                    group.sendMessage(last.deserializeMiraiCode())
                     desk.msg = ""
                 }
                 desk.sendPlayerMsg()

@@ -1,6 +1,5 @@
 package michael.landlord.landlord
 
-import michael.landlord.LandlordConfig
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 
