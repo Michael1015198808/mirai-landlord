@@ -19,7 +19,7 @@ import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.info
 
-object LandlordConfig : AutoSavePluginConfig("landlord") {
+object enableGroups : AutoSavePluginConfig("groups") {
     @ValueDescription("")
     private var groups: MutableSet<Long> by value(mutableSetOf())
 
@@ -43,13 +43,13 @@ object taskManageCommand : CompositeCommand(
     @SubCommand("开启", "on")
     @Description("在本群启动斗地主")
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.on() {
-        LandlordConfig.add(fromEvent.group.id)
+        enableGroups.add(fromEvent.group.id)
         fromEvent.group.sendMessage("本群${fromEvent.group.id}已开启斗地主功能！")
     }
     @SubCommand("关闭", "off")
     @Description("在本群关闭斗地主")
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.off() {
-        LandlordConfig.remove(fromEvent.group.id)
+        enableGroups.remove(fromEvent.group.id)
         fromEvent.group.sendMessage("本群${fromEvent.group.id}已关闭斗地主功能！")
     }
     @SubCommand("信息", "info", "版本", "version")
@@ -105,7 +105,7 @@ object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = "mirai.landlord",
         name = "mirai斗地主插件",
-        version = "0.4.0"
+        version = "0.4.1"
     ) {
         author("鄢振宇https://github.com/michael1015198808")
         info("mirai的斗地主插件")
@@ -155,13 +155,13 @@ object PluginMain : KotlinPlugin(
     }
     override fun onEnable() {
         logger.info { "Plugin loaded" }
-        LandlordConfig.reload()
+        enableGroups.reload()
         taskManageCommand.register()
         globalStatisticsData.reload()
         //配置文件目录 "${dataFolder.absolutePath}/"
         val eventChannel = GlobalEventChannel.parentScope(this)
         eventChannel.subscribeAlways<GroupMessageEvent>{
-            if(LandlordConfig.contains(group.id) && message[1] is PlainText) {
+            if(enableGroups.contains(group.id) && message[1] is PlainText) {
                 michael.landlord.main.bot = bot
                 val groupId = group.id
                 val playerId = sender.id
