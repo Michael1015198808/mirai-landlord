@@ -205,10 +205,10 @@ object PluginMain : KotlinPlugin(
                     desk.setMultiple(playerId, false)
                 } else if (msg.startsWith("明牌")) {
                     desk.openCard(playerId);
-                } else if ((msg.startsWith("弃牌"))
+                } /* else if ((msg.startsWith("弃牌"))
                     && desk.state >= STATE_BOSSING) {
                     desk.surrender(playerId);
-                }/*
+                }
                 else if (msg == L"记牌器") {
                     desk.msg << L"记牌器没做(好)呢！估计有生之年可以做好！";
                 } */
