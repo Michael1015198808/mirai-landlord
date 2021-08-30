@@ -46,7 +46,11 @@ class Desk(number: Long) {
         msg += "\n"
     }
 
-    fun getPlayer(number: Long): Int {
+    fun getPlayer(number: Long): Player? {
+        return players.firstOrNull { it.number == number }
+    }
+
+    fun getPlayerId(number: Long): Int {
         return players.indexOfFirst { it.number == number }
     }
 
@@ -279,7 +283,7 @@ class Desk(number: Long) {
     }
 
     fun getLandlord(playerNum: Long) {
-        val index = getPlayer(playerNum);
+        val index = getPlayerId(playerNum);
         if (state == STATE_BOSSING && currentPlayIndex == index) {
             //记录时间
             // time_t rawtime;
@@ -299,7 +303,7 @@ class Desk(number: Long) {
     }
 
     fun dontBoss(playerNum: Long) {
-        val index = getPlayer(playerNum)
+        val index = getPlayerId(playerNum)
         if (state == STATE_BOSSING && currentPlayIndex == index) {
             setNextPlayerIndex()
 
@@ -379,12 +383,11 @@ class Desk(number: Long) {
     }
 
     fun setMultiple(playerNum: Long, confirmMultiple: Boolean) {
-        val index = getPlayer(playerNum)
-        if (index != -1) {
-            val player = players[index]
+        val player = getPlayer(playerNum)
+        if (player != null) {
             if (! player.hasMultiplied) {
                 player.hasMultiplied = true
-                msg += at(players[index].number);
+                msg += at(player.number);
                 if(confirmMultiple) {
                     multiple += 1
                     msg += "要加倍。\n"
@@ -417,7 +420,7 @@ class Desk(number: Long) {
     }
 
     fun play(playNum: Long, raw_msg: String) {
-        val playIndex: Int = this.getPlayer(playNum)
+        val playIndex: Int = this.getPlayerId(playNum)
 
         if (playIndex == -1) {
             this.msg += "你不是玩家！"
@@ -577,7 +580,7 @@ class Desk(number: Long) {
     }
 
     fun discard(playNum: Long) {
-        if (this.currentPlayIndex != this.getPlayer(playNum) || this.state != STATE_GAMING) {
+        if (this.currentPlayIndex != this.getPlayerId(playNum) || this.state != STATE_GAMING) {
             return
         }
 
@@ -606,7 +609,7 @@ class Desk(number: Long) {
     }
 
     fun surrender(playNum: Long) {
-        val index = this.getPlayer(playNum)
+        val index = this.getPlayerId(playNum)
         if (index == -1 || this.players[index].isSurrender) {
             return
         }
@@ -672,9 +675,9 @@ class Desk(number: Long) {
     }
 
     fun openCard(playNum: Long) {
-        val index = this.getPlayer(playNum);
+        val player = this.getPlayer(playNum);
 
-        if (index == -1) {
+        if (player == null) {
             this.msg += "你不是玩家，不能明牌！"
             suspend { this.sendMsg(true) }
             return;
@@ -685,7 +688,6 @@ class Desk(number: Long) {
             this.msg += "明牌只能在准备阶段使用！"
             return
         }
-        val player = this.players[index];
 
         if (!player.isOpenCard) {
             player.isOpenCard = true;
@@ -758,7 +760,7 @@ class Desk(number: Long) {
     }
 
     fun join(playNum: Long) {
-        if (this.getPlayer(playNum) != -1) {
+        if (this.getPlayerId(playNum) != -1) {
             this.msg += this.at(playNum);
             this.breakLine();
             this.msg += "你已经加入游戏，不能重复加入！\n"
@@ -813,7 +815,7 @@ class Desk(number: Long) {
     }
     fun exit(number: Long) {
         if (this.state == STATE_WAIT) {
-            val index = this.getPlayer(number);
+            val index = this.getPlayerId(number);
             if (index != -1) {
                 this.players.removeAt(index)
                 this.msg += "退出成功，剩余玩家${this.players.size}人";
@@ -832,10 +834,10 @@ class Desk(number: Long) {
     }
 
     fun joinWatching(playNum: Long): Boolean {
-        val playIndex = this.getPlayer(playNum)
+        val player = this.getPlayer(playNum)
 
         //非弃牌玩家不能观战
-        if (playIndex != -1 && !players[playIndex].isSurrender) {
+        if (player != null && !player.isSurrender) {
             this.msg += this.at(playNum)
             this.breakLine()
             this.msg += "你已经加入游戏，请不要通过观战作弊！"

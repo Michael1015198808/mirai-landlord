@@ -191,7 +191,7 @@ object PluginMain : KotlinPlugin(
                 } else if (msg == "玩家列表") {
                     desk.listPlayers(1);
                 } else if (msg.startsWith("GO") || msg.startsWith("启动")) {
-                    if(desk.getPlayer(playerId) != -1) {
+                    if(desk.getPlayerId(playerId) != -1) {
                         desk.startGame();
                     } else {
                         desk.msg += "非玩家不能开始游戏！"
@@ -211,7 +211,11 @@ object PluginMain : KotlinPlugin(
                     desk.surrender(playerId);
                 } */
                 else if (msg == "记牌器") {
-                    val player = desk.players[desk.getPlayer(playerId)]
+                    val player = desk.getPlayer(playerId)
+                    if (player == null) {
+                        desk.msg += "你不是玩家！"
+                        return@subscribeAlways
+                    }
                     if (player.counterUsed) {
                         desk.msg += "您已使用过记牌器，一局只能使用一次！"
                     } else {
