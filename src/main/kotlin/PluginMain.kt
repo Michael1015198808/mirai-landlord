@@ -21,6 +21,7 @@ import net.mamoe.mirai.utils.info
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.declaredMembers
+import java.util.Collections.frequency
 
 object enableGroups : AutoSavePluginConfig("groups") {
     @ValueDescription("")
@@ -226,7 +227,7 @@ object PluginMain : KotlinPlugin(
                 } else if (msg == "玩家列表") {
                     desk.listPlayers(1);
                 } else if (msg.startsWith("GO") || msg.startsWith("启动")) {
-                    if(desk.getPlayer(playerId) != -1) {
+                    if(desk.getPlayerId(playerId) != -1) {
                         desk.startGame();
                     } else {
                         desk.msg += "非玩家不能开始游戏！"
@@ -235,19 +236,39 @@ object PluginMain : KotlinPlugin(
                     desk.getLandlord(playerId);
                 } else if (msg.startsWith("不") && desk.state == STATE_BOSSING) {
                     desk.dontBoss(playerId);
+                } else if (msg == "反抢" && desk.state == STATE_MULTIPLING && !desk.isForceBoss) {
+                    desk.forceLandlord(playerId)
                 } else if (msg.startsWith("加") && desk.state == STATE_MULTIPLING) {
                     desk.setMultiple(playerId, true)
                 } else if (msg.startsWith("不") && desk.state == STATE_MULTIPLING) {
                     desk.setMultiple(playerId, false)
                 } else if (msg.startsWith("明牌")) {
                     desk.openCard(playerId);
-                } else if ((msg.startsWith("弃牌"))
+                } /* else if ((msg.startsWith("弃牌"))
                     && desk.state >= STATE_BOSSING) {
                     desk.surrender(playerId);
-                }/*
-                else if (msg == L"记牌器") {
-                    desk.msg << L"记牌器没做(好)呢！估计有生之年可以做好！";
                 } */
+                else if (msg == "记牌器") {
+                    val player = desk.getPlayer(playerId)
+                    if (player == null) {
+                        desk.msg += "你不是玩家！"
+                        return@subscribeAlways
+                    }
+                    if (player.counterUsed) {
+                        desk.msg += "您已使用过记牌器，一局只能使用一次！"
+                    } else {
+                        player.counterUsed = true
+                        val cards = desk.players.flatMap {
+                            if (it.number == playerId)
+                                listOf()
+                            else
+                                it.card
+                        }
+                        player.msg += flag.joinToString("\n") {
+                            "$flag：${frequency(cards, flag)}张"
+                        }
+                    }
+                }
                 else if (Regex("统计(信息|数据|战绩)").matches(msg)) {
                     desk.msg += """
                     共进行游戏${globalStatisticsData.landlord_wins+globalStatisticsData.landlord_loses}场

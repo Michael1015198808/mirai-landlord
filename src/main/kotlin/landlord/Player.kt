@@ -8,6 +8,8 @@ class Player(playerNum: Long) {
     var isOpenCard: Boolean = false
     var isSurrender: Boolean = false
     var hasMultiplied: Boolean = false
+    // 是否用过记牌器
+    var counterUsed: Boolean = false
     suspend fun sendMsg() {
         if (msg != "") {
             Util.sendPrivateMsg(number, msg.trim())
