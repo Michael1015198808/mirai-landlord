@@ -1,6 +1,7 @@
 package michael.landlord.main
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 import michael.landlord.PluginMain
 import kotlin.random.Random
 
@@ -39,6 +40,7 @@ class Desk(number: Long) {
     var lastWeight: Int = 0 //上位玩家的牌的权重
 
     var msg: String = ""
+    val mutex = Mutex()
 
     fun at(playNum: Long): String {
         // TODO: Allow @people
@@ -63,22 +65,21 @@ class Desk(number: Long) {
 
         // TODO: Test mutablelist's speed and String's speend
         val ret: MutableList<String> = mutableListOf()
+        val score = if (isForceBoss && whoIsWinner == 2) {
+            ret += "地主反抢后失败，分数倍率×2\n"
+            basic * 2
+        } else {
+            basic
+        } * multiple
 
         if (players.size < 3) {
             ret += "游戏尚未开始，玩家列表：\n"
         } else {
-            val score = basic * multiple
             ret += "本局积分：${score}\n"
             ret += "出牌次数：$turn\n"
         }
         if(hasWin) {
             val landlord_flag: Boolean = (whoIsWinner == 1) //如果是地主赢了
-            val score = if (isForceBoss && !landlord_flag) {
-                msg += "地主反抢后失败，分数倍率×2\n"
-                basic * 2
-            } else {
-                basic
-            } * multiple
             val scores = players.map { PluginMain.readScore(it.number) }
             val average_score =  scores.sum() / 3
             val factors = scores.map { ((average_score - it) / 100).coerceIn(-20, 20) }.toMutableList()
@@ -418,7 +419,8 @@ class Desk(number: Long) {
 
             //进入加倍环节
             players.map { it.hasMultiplied = false }
-            multipliedCount = 1
+            multipliedCount = 0
+            multiple = 1
             multipleChoice()
         } else {
             msg += at(playerId) + "你已经是地主，不能反抢自己！"
