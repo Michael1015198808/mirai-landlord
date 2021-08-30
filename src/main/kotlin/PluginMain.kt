@@ -200,6 +200,8 @@ object PluginMain : KotlinPlugin(
                     desk.getLandlord(playerId);
                 } else if (msg.startsWith("不") && desk.state == STATE_BOSSING) {
                     desk.dontBoss(playerId);
+                } else if (msg == "反抢" && desk.state == STATE_MULTIPLING && !desk.isForceBoss) {
+                    desk.forceLandlord(playerId)
                 } else if (msg.startsWith("加") && desk.state == STATE_MULTIPLING) {
                     desk.setMultiple(playerId, true)
                 } else if (msg.startsWith("不") && desk.state == STATE_MULTIPLING) {
