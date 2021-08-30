@@ -1,5 +1,6 @@
 package michael.landlord.main
 
+import kotlinx.coroutines.runBlocking
 import michael.landlord.PluginMain
 import kotlin.random.Random
 
@@ -922,7 +923,7 @@ class Desk(number: Long) {
         builder.append("当前手牌信息：\n")
         builder.append(listPlayers(4))
         //不需要换行 watcher->breakLine();
-        suspend { CQ_sendPrivateMsg(0, joinNum, builder.toString()) }
+        runBlocking { CQ_sendPrivateMsg(0, joinNum, builder.toString()) }
     }
 
     fun sendWatchingMsg_Start() {
