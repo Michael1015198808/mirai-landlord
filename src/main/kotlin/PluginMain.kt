@@ -13,6 +13,7 @@ import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.plugin.version
+import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.NewFriendRequestEvent
@@ -117,17 +118,34 @@ object taskManageCommand : CompositeCommand(
             """.trimIndent())
     }
     private val members = LandlordConfig::class.declaredMembers
-    @SubCommand("设置", "set")
-    @Description("设置斗地主选项")
-    suspend fun CommandSenderOnMessage<GroupMessageEvent>.set(option: String, arg: Int) {
+    private suspend inline fun <reified T> set(contact: Contact, option: String, arg: T) {
         val field = members.find { it.name == option }
         if (field != null) {
-            val mp = field as KMutableProperty1<LandlordConfig, Int>
-            mp.set(LandlordConfig, arg)
-            fromEvent.group.sendMessage("已将${option}设置为$arg！")
+            try {
+                val mp = field as KMutableProperty1<LandlordConfig, T>
+                mp.set(LandlordConfig, arg)
+                contact.sendMessage("已将${option}设为$arg")
+            } catch (e: java.lang.IllegalArgumentException) {
+                contact.sendMessage("${option}不是${T::class.simpleName}型变量！")
+            }
         } else {
-            fromEvent.group.sendMessage("不存在属性$option！")
+            contact.sendMessage("不存在属性$option！")
         }
+    }
+    @SubCommand("禁用", "disable")
+    @Description("禁用斗地主选项")
+    suspend fun CommandSenderOnMessage<GroupMessageEvent>.disable(option: String) {
+        set(fromEvent.group, option, false)
+    }
+    @SubCommand("启用", "enable")
+    @Description("启用斗地主选项")
+    suspend fun CommandSenderOnMessage<GroupMessageEvent>.enable(option: String) {
+        set(fromEvent.group, option, true)
+    }
+    @SubCommand("设置", "set")
+    @Description("设置斗地主参数")
+    suspend fun CommandSenderOnMessage<GroupMessageEvent>.setInt(option: String, arg: Int) {
+        set(fromEvent.group, option, arg)
     }
     @SubCommand("当前设置", "settings")
     @Description("打印斗地主设置")
