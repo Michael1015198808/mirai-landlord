@@ -229,7 +229,7 @@ object PluginMain : KotlinPlugin(
                                 it.card
                         }
                         player.msg += flag.joinToString("\n") {
-                            "$flag：${frequency(cards, flag)}张"
+                            "$it：${frequency(cards, it)}张"
                         }
                     }
                 }

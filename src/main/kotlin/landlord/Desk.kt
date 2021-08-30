@@ -408,11 +408,12 @@ class Desk(number: Long) {
             cards.subList(51, 54).map {
                 players[bossIndex].card.remove(it)
             }
+            players[bossIndex].msg += "被反抢，手牌变为：\n" + players[bossIndex].handCards()
             bossIndex = index
             currentPlayIndex = index
             lastPlayIndex = index
             sendBossCard()
-            isForceBoss
+            isForceBoss = true
 
             //进入加倍环节
             players.map { it.hasMultiplied = false }
