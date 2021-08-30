@@ -18,6 +18,7 @@ import net.mamoe.mirai.event.events.NewFriendRequestEvent
 import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
 import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.utils.info
+import java.util.Collections.frequency
 
 object LandlordConfig : AutoSavePluginConfig("landlord") {
     @ValueDescription("")
@@ -208,10 +209,24 @@ object PluginMain : KotlinPlugin(
                 } /* else if ((msg.startsWith("弃牌"))
                     && desk.state >= STATE_BOSSING) {
                     desk.surrender(playerId);
-                }
-                else if (msg == L"记牌器") {
-                    desk.msg << L"记牌器没做(好)呢！估计有生之年可以做好！";
                 } */
+                else if (msg == "记牌器") {
+                    val player = desk.players[desk.getPlayer(playerId)]
+                    if (player.counterUsed) {
+                        desk.msg += "您已使用过记牌器，一局只能使用一次！"
+                    } else {
+                        player.counterUsed = true
+                        val cards = desk.players.flatMap {
+                            if (it.number == playerId)
+                                listOf()
+                            else
+                                it.card
+                        }
+                        player.msg += flag.joinToString("\n") {
+                            "$flag：${frequency(cards, flag)}张"
+                        }
+                    }
+                }
                 else if (Regex("统计(信息|数据|战绩)").matches(msg)) {
                     desk.msg += """
                     共进行游戏${globalStatisticsData.landlord_wins+globalStatisticsData.landlord_loses}场
