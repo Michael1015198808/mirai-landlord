@@ -43,9 +43,13 @@ object enableGroups : AutoSavePluginConfig("groups") {
 object LandlordConfig : AutoSavePluginConfig("config") {
     @ValueDescription(
         "消息截断长度。当消息超过长度时按行进行截断。\n" +
-        "当机器人发送长消息被吞时启用。\n"
+        "当机器人发送长消息被吞时启用。"
     )
     var length by value(1000)
+    @ValueDescription(
+        "计算农民分数加成时，每加成1%所需分差。"
+    )
+    var factor by value(200)
 }
 
 object taskManageCommand : CompositeCommand(
@@ -83,8 +87,8 @@ object taskManageCommand : CompositeCommand(
             中途退出（弃牌）、挂机（抢地主、加倍${CONFIG_TIME_BOSS}秒，出牌${CONFIG_TIME_GAME}秒）倒扣${CONFIG_SURRENDER_PENALTY}分。
             每局游戏的标准分为${CONFIG_INIT_SCORE}分。
             每一局游戏会计算三名玩家积分的平均分。
-            农民积分每比平均分低100，失败时分数少扣1%，胜利时分数多加1%。
-            农民积分每比平均分高100，失败时分数多扣1%，胜利时分数少加1%。
+            农民积分每比平均分低${LandlordConfig.factor}，失败时分数少扣1%，胜利时分数多加1%。
+            农民积分每比平均分高${LandlordConfig.factor}，失败时分数多扣1%，胜利时分数少加1%。
             上限为原本的120%，下限为原本的80%。
             分数下限为负5亿，上限为正5亿。
             """.trimIndent())
@@ -130,10 +134,9 @@ object taskManageCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.settings() {
         fromEvent.group.sendMessage(
             members.joinToString("\n") { field ->
-                val mp = field as KProperty<Int>
                 """
-                ${field.name}：${mp.call(LandlordConfig)}
-                    ${field.annotations.filterIsInstance<ValueDescription>().joinToString { it.value }}
+                ◆ ${field.name}：${field.call(LandlordConfig).toString()}
+                ${field.annotations.filterIsInstance<ValueDescription>().joinToString { it.value }}
                 """.trimIndent()
             })
     }

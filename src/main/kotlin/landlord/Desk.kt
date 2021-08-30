@@ -2,6 +2,7 @@ package michael.landlord.main
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import michael.landlord.LandlordConfig
 import michael.landlord.PluginMain
 import kotlin.random.Random
 
@@ -82,7 +83,7 @@ class Desk(number: Long) {
             val landlord_flag: Boolean = (whoIsWinner == 1) //如果是地主赢了
             val scores = players.map { PluginMain.readScore(it.number) }
             val average_score =  scores.sum() / 3
-            val factors = scores.map { ((average_score - it) / 100).coerceIn(-20, 20) }.toMutableList()
+            val factors = scores.map { ((average_score - it) / LandlordConfig.factor).coerceIn(-20, 20) }.toMutableList()
             factors[bossIndex] = 0
             factors[bossIndex] = -factors.sum()
 
