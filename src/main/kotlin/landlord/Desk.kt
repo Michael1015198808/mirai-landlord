@@ -391,7 +391,7 @@ class Desk(number: Long) {
             是否要加倍？
             请用[加]或[不(加)]来回答。
             """.trimIndent()
-        if (!isForceBoss) {
+        if (LandlordConfig.反抢 && !isForceBoss) {
             msg += """
             如果要反抢请输入[反抢]。
             （注：反抢后获胜，基本分不变。反抢后失败，基本分按2倍计算）

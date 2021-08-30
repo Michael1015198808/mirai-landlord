@@ -51,6 +51,10 @@ object LandlordConfig : AutoSavePluginConfig("config") {
         "计算农民分数加成时，每加成1%所需分差。"
     )
     var factor by value(200)
+    @ValueDescription(
+        "是否启用反抢"
+    )
+    var 反抢 by value(false)
 }
 
 object taskManageCommand : CompositeCommand(
@@ -152,10 +156,8 @@ object taskManageCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.settings() {
         fromEvent.group.sendMessage(
             members.joinToString("\n") { field ->
-                """
-                ◆ ${field.name}：${field.call(LandlordConfig).toString()}
-                ${field.annotations.filterIsInstance<ValueDescription>().joinToString { it.value }}
-                """.trimIndent()
+                "◆ ${field.name}：${field.call(LandlordConfig).toString()}\n" +
+                field.annotations.filterIsInstance<ValueDescription>().joinToString { it.value }
             })
     }
 }
@@ -259,7 +261,7 @@ object PluginMain : KotlinPlugin(
                         desk.getLandlord(playerId);
                     } else if (msg.startsWith("不") && desk.state == STATE_BOSSING) {
                         desk.dontBoss(playerId);
-                    } else if (msg == "反抢" && desk.state == STATE_MULTIPLING && !desk.isForceBoss) {
+                    } else if (LandlordConfig.反抢 && msg == "反抢" && desk.state == STATE_MULTIPLING && !desk.isForceBoss) {
                         desk.forceLandlord(playerId)
                     } else if (msg.startsWith("加") && desk.state == STATE_MULTIPLING) {
                         desk.setMultiple(playerId, true)
