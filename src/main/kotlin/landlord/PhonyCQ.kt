@@ -1,6 +1,6 @@
 package michael.landlord.main
 
-import michael.landlord.LandlordConfig
+import michael.landlord.Config
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.contact.getMember
 import net.mamoe.mirai.Bot
@@ -9,7 +9,7 @@ import net.mamoe.mirai.message.code.MiraiCode.deserializeMiraiCode
 var bot: Bot? = null
 suspend fun CQ_sendGroupMsg(ac: Int, groupId: Long, str: String) {
     val last = str.split('\n').reduce {cumulation, line ->
-        if (cumulation.length + line.length < LandlordConfig.length) {
+        if (cumulation.length + line.length < Config.length) {
             cumulation + "\n" + line
         } else {
             bot!!.getGroup(groupId)?.sendMessage(cumulation.deserializeMiraiCode())

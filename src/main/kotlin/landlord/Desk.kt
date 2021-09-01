@@ -2,7 +2,7 @@ package michael.landlord.main
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
-import michael.landlord.LandlordConfig
+import michael.landlord.Config
 import michael.landlord.PluginMain
 import kotlin.random.Random
 
@@ -83,7 +83,7 @@ class Desk(number: Long) {
             val landlord_flag: Boolean = (whoIsWinner == 1) //如果是地主赢了
             val scores = players.map { PluginMain.readScore(it.number) }
             val average_score =  scores.sum() / 3
-            val factors = scores.map { ((average_score - it) / LandlordConfig.factor).coerceIn(-20, 20) }.toMutableList()
+            val factors = scores.map { ((average_score - it) / Config.factor).coerceIn(-20, 20) }.toMutableList()
             factors[bossIndex] = 0
             factors[bossIndex] = -factors.sum()
 
@@ -391,7 +391,7 @@ class Desk(number: Long) {
             是否要加倍？
             请用[加]或[不(加)]来回答。
             """.trimIndent()
-        if (LandlordConfig.反抢 && !isForceBoss) {
+        if (Config.反抢 && !isForceBoss) {
             msg += """
             如果要反抢请输入[反抢]。
             （注：反抢后获胜，基本分不变。反抢后失败，基本分按2倍计算）

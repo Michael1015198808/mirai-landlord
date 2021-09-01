@@ -75,8 +75,8 @@ object taskManageCommand : CompositeCommand(
             中途退出（弃牌）、挂机（抢地主、加倍${CONFIG_TIME_BOSS}秒，出牌${CONFIG_TIME_GAME}秒）倒扣${CONFIG_SURRENDER_PENALTY}分。
             每局游戏的标准分为${CONFIG_INIT_SCORE}分。
             每一局游戏会计算三名玩家积分的平均分。
-            农民积分每比平均分低${LandlordConfig.factor}，失败时分数少扣1%，胜利时分数多加1%。
-            农民积分每比平均分高${LandlordConfig.factor}，失败时分数多扣1%，胜利时分数少加1%。
+            农民积分每比平均分低${Config.factor}，失败时分数少扣1%，胜利时分数多加1%。
+            农民积分每比平均分高${Config.factor}，失败时分数多扣1%，胜利时分数少加1%。
             上限为原本的120%，下限为原本的80%。
             分数下限为负5亿，上限为正5亿。
             """.trimIndent())
@@ -104,13 +104,13 @@ object taskManageCommand : CompositeCommand(
             强制结束：结束当前群的游戏，正式版将移除
             """.trimIndent())
     }
-    private val members = LandlordConfig::class.declaredMembers
+    private val members = Config::class.declaredMembers
     private suspend inline fun <reified T> set(contact: Contact, option: String, arg: T) {
         val field = members.find { it.name == option }
         if (field != null) {
             try {
-                val mp = field as KMutableProperty1<LandlordConfig, T>
-                mp.set(LandlordConfig, arg)
+                val mp = field as KMutableProperty1<Config, T>
+                mp.set(Config, arg)
                 contact.sendMessage("已将${option}设为$arg")
             } catch (e: java.lang.IllegalArgumentException) {
                 contact.sendMessage("${option}不是${T::class.simpleName}型变量！")
@@ -139,7 +139,7 @@ object taskManageCommand : CompositeCommand(
     suspend fun CommandSenderOnMessage<GroupMessageEvent>.settings() {
         fromEvent.group.sendMessage(
             members.joinToString("\n") { field ->
-                "◆ ${field.name}：${field.call(LandlordConfig).toString()}\n" +
+                "◆ ${field.name}：${field.call(Config).toString()}\n" +
                 field.annotations.filterIsInstance<ValueDescription>().joinToString { it.value }
             })
     }
@@ -244,7 +244,7 @@ object PluginMain : KotlinPlugin(
                         desk.getLandlord(playerId);
                     } else if (msg.startsWith("不") && desk.state == STATE_BOSSING) {
                         desk.dontBoss(playerId);
-                    } else if (LandlordConfig.反抢 && msg == "反抢" && desk.state == STATE_MULTIPLING && !desk.isForceBoss) {
+                    } else if (Config.反抢 && msg == "反抢" && desk.state == STATE_MULTIPLING && !desk.isForceBoss) {
                         desk.forceLandlord(playerId)
                     } else if (msg.startsWith("加") && desk.state == STATE_MULTIPLING) {
                         desk.setMultiple(playerId, true)
@@ -314,7 +314,7 @@ object PluginMain : KotlinPlugin(
                     }
                     if (desk.msg.trim() != "") {
                         val last = desk.msg.trim().split('\n').reduce {cumulation, line ->
-                            if (cumulation.length + line.length < LandlordConfig.length) {
+                            if (cumulation.length + line.length < Config.length) {
                                 cumulation + "\n" + line
                             } else {
                                 group.sendMessage(cumulation.deserializeMiraiCode())

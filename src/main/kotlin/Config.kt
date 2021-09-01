@@ -4,7 +4,7 @@ import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.value
 
-object LandlordConfig : AutoSavePluginConfig("config") {
+object Config : AutoSavePluginConfig("config") {
     @ValueDescription(
         "消息截断长度。当消息超过长度时按行进行截断。\n" +
             "当机器人发送长消息被吞时启用。"
