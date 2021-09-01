@@ -393,31 +393,38 @@ class Desk(number: Long) {
     }
 
     fun forceLandlord(playerId: Long) {
-        val index = getPlayerId(playerId)
-        if (bossIndex != index) {
-            //记录时间
-            // time_t rawtime;
-            // lastTime = time(&rawtime);
-            //防止提示后抢地主出现bug
-            warningSent = false
-
-            cards.subList(51, 54).map {
-                players[bossIndex].card.remove(it)
+        when(val index = getPlayerId(playerId)) {
+            -1 -> {
+                if(Config.verbose) {
+                    this.msg += "你不是玩家！"
+                }
             }
-            players[bossIndex].msg += "被反抢，手牌变为：\n" + players[bossIndex].handCards()
-            bossIndex = index
-            currentPlayIndex = index
-            lastPlayIndex = index
-            sendBossCard()
-            isForceBoss = true
+            bossIndex -> {
+                msg += at(playerId) + "你已经是地主，不能反抢自己！"
+            }
+            else -> {
+                //记录时间
+                // time_t rawtime;
+                // lastTime = time(&rawtime);
+                //防止提示后抢地主出现bug
+                warningSent = false
 
-            //进入加倍环节
-            players.map { it.hasMultiplied = false }
-            multipliedCount = 0
-            multiple = 1
-            multipleChoice()
-        } else {
-            msg += at(playerId) + "你已经是地主，不能反抢自己！"
+                cards.subList(51, 54).map {
+                    players[bossIndex].card.remove(it)
+                }
+                players[bossIndex].msg += "被反抢，手牌变为：\n" + players[bossIndex].handCards()
+                bossIndex = index
+                currentPlayIndex = index
+                lastPlayIndex = index
+                sendBossCard()
+                isForceBoss = true
+
+                //进入加倍环节
+                players.map { it.hasMultiplied = false }
+                multipliedCount = 0
+                multiple = 1
+                multipleChoice()
+            }
         }
     }
 
