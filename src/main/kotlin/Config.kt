@@ -14,4 +14,6 @@ object Config : AutoSavePluginConfig("config") {
     var factor by value(200)
     @ValueDescription("是否启用反抢")
     var 反抢 by value(false)
+    @ValueDescription("是否打印详细信息。为防止被封禁，请尽量关闭。")
+    var verbose by value(false)
 }

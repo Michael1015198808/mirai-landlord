@@ -266,10 +266,6 @@ class Desk(number: Long) {
         watchers.sendMsg()
     }
 
-    fun shuffle() {
-        java.util.Collections.shuffle(cards)
-    }
-
     fun createBoss() {
         state = STATE_BOSSING
 
@@ -335,7 +331,7 @@ class Desk(number: Long) {
                 msg += "第1次抢地主失败，重新发牌。\n"
                 msg += Util.crossline()
                 isSecondCallForBoss = true
-                shuffle();
+                this.cards.shuffle()
                 deal();
                 createBoss();
                 return;
@@ -345,12 +341,9 @@ class Desk(number: Long) {
                 msg += "不抢地主。";
                 breakLine();
                 msg += Util.crossline()
-                breakLine();
                 msg += at(players[currentPlayIndex].number);
                 breakLine();
                 msg += "你是否要抢地主？";
-                breakLine();
-                msg += "请用[抢]或[不(抢)]来回答。";
                 breakLine();
             }
         }
@@ -469,11 +462,15 @@ class Desk(number: Long) {
         val playIndex: Int = this.getPlayerId(playNum)
 
         if (playIndex == -1) {
-            this.msg += "你不是玩家！"
+            if (Config.verbose) {
+                this.msg += "你不是玩家！"
+            }
             return
         }
         if (playIndex != this.currentPlayIndex) {
-            this.msg += "还没轮到你出牌"
+            if (Config.verbose) {
+                this.msg += "还没轮到你出牌"
+            }
             return
         }
         if((!(this.state == STATE_GAMING && this.turn > 0)
@@ -570,8 +567,6 @@ class Desk(number: Long) {
                     this.msg += "本局出现反春天，积分倍数x2\n"
                     this.msg += "本局积分：${this.basic*this.multiple}\n"
                 }
-
-
                 this.msg += Util.crossline()
                 this.msg += "分数结算：\n"
                 this.msg += this.listPlayers(3);
@@ -607,13 +602,22 @@ class Desk(number: Long) {
 
             //观战播报，必须先转发战况再设置下一位玩家，否则玩家信息错误
             this.sendWatchingMsg_Play()
-
             this.setNextPlayerIndex()
 
-            this.msg += Util.crossline()
             //this.msg << L"第" << this.turn + 1 << L"回合：";
             //this.breakLine();
-            this.msg += this.listPlayers(1)
+            if (Config.verbose) {
+                this.msg += Util.crossline()
+                this.msg += this.listPlayers(1)
+            } else {
+                this.msg += "${playIndex+1}号玩家${at(player.number)}" +
+                    "[${if(playIndex == bossIndex) "地主" else "农民"}]" +
+                    "：${player.card.size}张手牌"
+                if (player.isOpenCard) {
+                    this.msg += player.handCards()
+                }
+                this.msg += "\n"
+            }
             this.msg += "现在轮到"
             this.msg += this.at(this.players[this.currentPlayIndex].number)
             this.msg += "出牌。\n"
@@ -641,14 +645,14 @@ class Desk(number: Long) {
         //防止提示后过牌出现bug
         this.warningSent = false;
 
-        this.msg += this.at(playNum)
-        this.msg += "过牌，"
-
         this.setNextPlayerIndex();
-
-        this.msg += "现在轮到";
-        this.msg += this.at(this.players[this.currentPlayIndex].number)
-        this.msg += "出牌。\n"
+        if (Config.verbose) {
+            this.msg += this.at(playNum)
+            this.msg += "过牌，"
+            this.msg += "现在轮到";
+            this.msg += this.at(this.players[this.currentPlayIndex].number)
+            this.msg += "出牌。\n"
+        }
 
         //观战播报
         this.sendWatchingMsg_Pass(playNum);
@@ -724,7 +728,9 @@ class Desk(number: Long) {
         val player = this.getPlayer(playNum);
 
         if (player == null) {
-            this.msg += "你不是玩家，不能明牌！"
+            if (Config.verbose) {
+                this.msg += "你不是玩家，不能明牌！"
+            }
             suspend { this.sendMsg(true) }
             return;
         }
@@ -1023,12 +1029,14 @@ class Desk(number: Long) {
 
             //this->msg += "准备环节可以进行[明牌]操作，明牌会使积分倍数 + 2，请谨慎操作！";
             //this->breakLine();
-            this.msg += Util.crossline()
-            this.breakLine();
 
-            this.shuffle()
+            this.cards.shuffle()
             this.deal()
-            this.msg += this.listPlayers(0)
+            if (Config.verbose) {
+                this.msg += Util.crossline()
+                this.breakLine()
+                this.msg += this.listPlayers(0)
+            }
 
             this.createBoss();
         } else {
