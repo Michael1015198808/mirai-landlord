@@ -3,16 +3,18 @@ package michael.landlord.main
 import michael.landlord.PluginMain
 import michael.landlord.PluginMain.globalStatisticsData
 import net.mamoe.mirai.contact.Contact
+import net.mamoe.mirai.contact.Group
 
 object Casino {
     val desks: MutableList<Desk> = mutableListOf()
     fun getDesk(deskNum: Long): Int {
         return this.desks.indexOfFirst { it.number == deskNum }
     }
-    fun getOrCreatDesk(deskNum: Long): Desk {
-        val deskIndex = getDesk(deskNum);
+    fun getOrCreatDesk(group: Group): Desk {
+        val groupId = group.id
+        val deskIndex = getDesk(groupId);
         if (deskIndex == -1) {//没有桌子
-            val desk = Desk(deskNum)
+            val desk = Desk(groupId, group)
             this.desks += desk;
             return desk
         } else {

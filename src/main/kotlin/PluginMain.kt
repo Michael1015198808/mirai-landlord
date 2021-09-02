@@ -200,8 +200,9 @@ object PluginMain : KotlinPlugin(
     override fun onEnable() {
         logger.info { "Plugin loaded" }
         enableGroups.reload()
-        taskManageCommand.register()
         globalStatisticsData.reload()
+        Config.reload()
+        taskManageCommand.register()
         //配置文件目录 "${dataFolder.absolutePath}/"
         val eventChannel = GlobalEventChannel.parentScope(this)
         eventChannel.subscribeAlways<GroupMessageEvent>{
@@ -211,7 +212,7 @@ object PluginMain : KotlinPlugin(
                 val playerId = sender.id
                 var msg = message[1].toString().trim().uppercase()
 
-                val desk = Casino.getOrCreatDesk(groupId);
+                val desk = Casino.getOrCreatDesk(group);
                 desk.mutex.withLock {
 
                     if (playerId == 80000000L) {

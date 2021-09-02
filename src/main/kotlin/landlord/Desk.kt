@@ -2,16 +2,44 @@ package michael.landlord.main
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import michael.landlord.Config
 import michael.landlord.PluginMain
+import net.mamoe.mirai.contact.Group
+import net.mamoe.mirai.message.data.At
+import net.mamoe.mirai.message.data.PlainText
+import net.mamoe.mirai.message.data.messageChainOf
+import java.util.*
 import kotlin.random.Random
 
-class Desk(number: Long) {
+data class NotifyTask(
+    val desk: Desk,
+    val index: Int
+): TimerTask() {
+    override fun run() {
+        runBlocking {
+            desk.mutex.withLock {
+                if(desk.currentPlayIndex == index) {
+                    desk.group.sendMessage(
+                        messageChainOf(
+                            At(desk.players[index].number),
+                            PlainText(" 轮到你出牌啦！")
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+data class Desk(
+    val number: Long, // 桌号，即群号
+    val group: Group,
+) {
     var turn: Int = 0
     var multiple: Long = 1 // 分数倍率
     val basic: Long = CONFIG_INIT_SCORE
     var lastTime: Long = 0
-    var number: Long = number // 桌号？
     var cards: MutableList<String> = cardDest.toMutableList()
     @Volatile
     var players: MutableList<Player> = mutableListOf()
@@ -42,6 +70,7 @@ class Desk(number: Long) {
 
     var msg: String = ""
     val mutex = Mutex()
+    val timer = Timer()
 
     fun at(playNum: Long): String {
         // TODO: Allow @people
@@ -578,6 +607,7 @@ class Desk(number: Long) {
                 this.msg += "分数结算：\n"
                 this.msg += this.listPlayers(3);
 
+                timer.purge()
                 Casino.gameOver(this.number);
                 return
             }
@@ -628,6 +658,7 @@ class Desk(number: Long) {
             this.msg += "现在轮到"
             this.msg += this.at(this.players[this.currentPlayIndex].number)
             this.msg += "出牌。\n"
+            this.timer.purge()
         }
         else {
             this.msg += this.at(this.players[this.currentPlayIndex].number)
@@ -660,6 +691,8 @@ class Desk(number: Long) {
             this.msg += this.at(this.players[this.currentPlayIndex].number)
             this.msg += "出牌。\n"
         }
+        this.timer.purge()
+        this.timer.schedule(NotifyTask(this, currentPlayIndex), Config.timeout)
 
         //观战播报
         this.sendWatchingMsg_Pass(playNum);

@@ -4,7 +4,7 @@ import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.value
 
-object Config : AutoSavePluginConfig("config") {
+object Config: AutoSavePluginConfig("config") {
     @ValueDescription(
         "消息截断长度。当消息超过长度时按行进行截断。\n" +
             "当机器人发送长消息被吞时启用。"
@@ -16,4 +16,6 @@ object Config : AutoSavePluginConfig("config") {
     var 反抢 by value(false)
     @ValueDescription("是否打印详细信息。为防止被封禁，请尽量关闭。")
     var verbose by value(false)
+    @ValueDescription("出牌超时提醒，以毫秒为单位")
+    var timeout by value(5000L)
 }
